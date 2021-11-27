@@ -9,58 +9,35 @@ import (
 )
 
 func GaugeRoute(w http.ResponseWriter, r *http.Request) {
-	gaugeRoute := []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "RandomValue"}
+	//gaugeRoute := []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "RandomValue"}
 	uri, _ := url.Parse(r.URL.RequestURI())
 	realPath := strings.Replace(uri.Path, "/update/gauge", "", 1)
 	all := strings.Split(realPath, "/")
 	log.Printf("Method: %s, URI: %s", r.Method, all)
 	if len(all) == 2 {
-		validRoute := false
-		for _, val := range gaugeRoute {
-			if val == all[0] {
-				validRoute = true
-			}
-		}
-		if validRoute {
-			_, err := strconv.ParseFloat(all[1], 64)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-			} else {
-				w.WriteHeader(http.StatusOK)
-			}
+		_, err := strconv.ParseFloat(all[1], 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusOK)
 		}
-
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
 }
 
 func CounterRoute(w http.ResponseWriter, r *http.Request) {
-	counterRoute := []string{"PollCount"}
 	uri, _ := url.Parse(r.URL.RequestURI())
 	realPath := strings.Replace(uri.Path, "/update/counter", "", 1)
 	all := strings.Split(realPath, "/")
 	log.Printf("Method: %s, URI: %s", r.Method, all)
 	if len(all) == 2 {
-		validRoute := false
-		for _, val := range counterRoute {
-			if val == all[0] {
-				validRoute = true
-			}
-		}
-		if validRoute {
-			_, err := strconv.ParseFloat(all[1], 64)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-			} else {
-				w.WriteHeader(http.StatusOK)
-			}
+		_, err := strconv.ParseFloat(all[1], 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusOK)
 		}
-
 	} else {
 		w.WriteHeader(http.StatusNotFound)
 	}
