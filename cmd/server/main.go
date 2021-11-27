@@ -29,7 +29,7 @@ func GaugeRoute(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 		}
 
 	} else {
@@ -58,7 +58,7 @@ func CounterRoute(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 		}
 
 	} else {
