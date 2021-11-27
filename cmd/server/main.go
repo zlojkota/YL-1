@@ -49,12 +49,16 @@ func CounterRoute(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func NotImplementRoute(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 func main() {
 	http.HandleFunc("/update/gauge/", GaugeRoute)
 	http.Handle("/update/gauge", http.NotFoundHandler())
 	http.HandleFunc("/update/counter/", CounterRoute)
 	http.Handle("/update/counter", http.NotFoundHandler())
-	http.Handle("/", http.NotFoundHandler())
+	http.HandleFunc("/", NotImplementRoute)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal(err)
