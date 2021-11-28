@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
+	"github.com/zlojkota/YL-1/internal/serverHeaders"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
 )
 
 func main() {
@@ -16,13 +16,10 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.INFO)
 	//default answer
-	e.GET("/*", func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, "OK")
-	})
-	e.POST("/*", func(c echo.Context) error {
-		return c.JSON(http.StatusNotImplemented, "OK")
-	})
+	e.GET("/*", serverHeaders.DefaultHandler)
+	e.POST("/*", serverHeaders.DefaultHandler)
 	// update Handler
+	e.POST("/:method/:type/:metric/:value", serverHeaders.UpdateHandler)
 
 	// Start server
 	go func() {
@@ -41,8 +38,4 @@ func main() {
 	if err := e.Shutdown(ctx); err != nil {
 		e.Logger.Fatal(err)
 	}
-}
-
-func updateHandler(c echo.Context) {
-
 }
