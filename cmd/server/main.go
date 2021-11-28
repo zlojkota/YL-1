@@ -1,66 +1,48 @@
 package main
 
 import (
-	"log"
+	"context"
 	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
-func GaugeRoute(w http.ResponseWriter, r *http.Request) {
-	//gaugeRoute := []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse", "HeapObjects", "HeapReleased", "HeapSys", "LastGC", "Lookups", "MCacheInuse", "MCacheSys", "MSpanInuse", "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse", "StackSys", "Sys", "RandomValue"}
-	uri, _ := url.Parse(r.URL.RequestURI())
-	realPath := strings.Replace(uri.Path, "/update/gauge", "", 1)
-	if string([]rune(realPath)[0]) == "/" {
-		realPath = strings.Replace(realPath, "/", "", 1)
-	}
-	all := strings.Split(realPath, "/")
-	log.Printf("Method: %s, URI: %s", r.Method, all)
-	if len(all) == 2 {
-		_, err := strconv.ParseFloat(all[1], 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			w.WriteHeader(http.StatusOK)
-		}
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-	}
-}
-
-func CounterRoute(w http.ResponseWriter, r *http.Request) {
-	uri, _ := url.Parse(r.URL.RequestURI())
-	realPath := strings.Replace(uri.Path, "/update/counter", "", 1)
-	if string([]rune(realPath)[0]) == "/" {
-		realPath = strings.Replace(realPath, "/", "", 1)
-	}
-	all := strings.Split(realPath, "/")
-	log.Printf("Method: %s, URI: %s", r.Method, all)
-	if len(all) == 2 {
-		_, err := strconv.ParseInt(all[1], 0, 64)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			w.WriteHeader(http.StatusOK)
-		}
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-	}
-}
-
-func NotImplementRoute(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
 func main() {
-	http.HandleFunc("/update/gauge/", GaugeRoute)
-	http.Handle("/update/gauge", http.NotFoundHandler())
-	http.HandleFunc("/update/counter/", CounterRoute)
-	http.Handle("/update/counter", http.NotFoundHandler())
-	http.HandleFunc("/", NotImplementRoute)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal(err)
+	// Setup
+	e := echo.New()
+	e.Logger.SetLevel(log.INFO)
+	//default answer
+	e.GET("/*", func(c echo.Context) error {
+		return c.JSON(http.StatusNotImplemented, "OK")
+	})
+	e.POST("/*", func(c echo.Context) error {
+		return c.JSON(http.StatusNotImplemented, "OK")
+	})
+	// update Handler
+
+	// Start server
+	go func() {
+		if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
+	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
 	}
+}
+
+func updateHandler(c echo.Context) {
+
 }

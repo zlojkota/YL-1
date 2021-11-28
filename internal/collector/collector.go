@@ -2,11 +2,9 @@ package collector
 
 import (
 	"fmt"
-	//	"fmt"
 	"math/rand"
 	"runtime"
 	"time"
-	//	"time"
 )
 
 type CollectorHandle interface {

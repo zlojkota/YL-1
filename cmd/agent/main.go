@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/zlojkota/go-musthave-devops-tpl/internal/collector"
+	"github.com/zlojkota/YL-1"
 	"net/http"
 	"time"
 )
