@@ -16,11 +16,10 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.INFO)
 	//default answer
-	e.GET("/*", serverHeaders.DefaultHandler)
-	e.POST("/*", serverHeaders.DefaultHandler)
+	e.GET("/*", serverHeaders.NotFoundHandler)
+	e.POST("/*", serverHeaders.NotFoundHandler)
 	// update Handler
 	e.POST("/:method/:type/:metric/:value", serverHeaders.UpdateHandler)
-	e.POST("/update/*", serverHeaders.UpdateHandler)
 
 	// Start server
 	go func() {
