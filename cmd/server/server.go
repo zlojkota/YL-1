@@ -20,6 +20,7 @@ func main() {
 	e.POST("/*", serverHeaders.DefaultHandler)
 	// update Handler
 	e.POST("/:method/:type/:metric/:value", serverHeaders.UpdateHandler)
+	e.POST("/update/*", serverHeaders.UpdateHandler)
 
 	// Start server
 	go func() {

@@ -11,6 +11,10 @@ func DefaultHandler(c echo.Context) error {
 	return c.NoContent(http.StatusNotImplemented)
 }
 
+func NotFoundHandler(c echo.Context) error {
+	return c.NoContent(http.StatusNotFound)
+}
+
 func UpdateHandler(c echo.Context) error {
 
 	if c.Param("method") != "update" {
