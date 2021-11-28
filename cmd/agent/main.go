@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/zlojkota/YL-1"
+	"github.com/zlojkota/YL-1/internal/collector"
 	"net/http"
 	"time"
 )
