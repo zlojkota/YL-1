@@ -4,22 +4,35 @@ import (
 	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func DefaultHandler(c echo.Context) error {
-	return c.JSON(http.StatusNotImplemented, "OK")
+	return c.NoContent(http.StatusNotImplemented)
 }
 
 func UpdateHandler(c echo.Context) error {
 
 	if c.Param("method") != "update" {
-		return c.JSON(http.StatusNotFound, "Not found 404")
+		return c.NoContent(http.StatusNotFound)
 	}
-	if c.Param("type") != "counter" || c.Param("type") != "gauge" {
-		return c.JSON(http.StatusNotFound, "Not found 404")
+	switch typeM := c.Param("type"); typeM {
+	case "counter":
+		_, err := strconv.ParseInt(c.Param("value"), 0, 64)
+		if err != nil {
+			return c.NoContent(http.StatusBadRequest)
+		}
+		return c.NoContent(http.StatusOK)
+	case "gauge":
+		_, err := strconv.ParseFloat(c.Param("value"), 64)
+		if err != nil {
+			return c.NoContent(http.StatusBadRequest)
+		}
+		return c.NoContent(http.StatusOK)
+	default:
+		return c.NoContent(http.StatusNotFound)
 	}
-	//c.Param("metric")
-	//c.Param("value")
+
 	log.Printf("Type: %s, Metric %s=%s", c.Param("type"), c.Param("metric"), c.Param("value"))
-	return c.JSON(http.StatusOK, "OK")
+	return c.String(http.StatusOK, "OK")
 }
