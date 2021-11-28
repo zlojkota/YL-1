@@ -2,14 +2,9 @@ package serverHeaders
 
 import (
 	"github.com/labstack/echo/v4"
-	"log"
 	"net/http"
 	"strconv"
 )
-
-func DefaultHandler(c echo.Context) error {
-	return c.NoContent(http.StatusNotImplemented)
-}
 
 func NotFoundHandler(c echo.Context) error {
 	return c.NoContent(http.StatusNotFound)
@@ -34,9 +29,6 @@ func UpdateHandler(c echo.Context) error {
 		}
 		return c.NoContent(http.StatusOK)
 	default:
-		return c.NoContent(http.StatusNotFound)
+		return c.NoContent(http.StatusNotImplemented)
 	}
-
-	log.Printf("Type: %s, Metric %s=%s", c.Param("type"), c.Param("metric"), c.Param("value"))
-	return c.String(http.StatusOK, "OK")
 }
