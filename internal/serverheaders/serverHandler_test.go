@@ -15,7 +15,7 @@ func TestServerHandler_NotFoundHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		h := &ServerHandler{}
+		h := NewServerHandler()
 
 		// Assertions
 		if assert.NoError(t, h.NotFoundHandler(c)) {
@@ -101,7 +101,7 @@ func TestServerHandler_UpdateHandler(t *testing.T) {
 			c.SetPath("/:method/:type/:metric/:value")
 			c.SetParamNames("method", "type", "metric", "value")
 			c.SetParamValues(itc.method, itc.typeName, itc.metric, itc.value)
-			h := &ServerHandler{}
+			h := NewServerHandler()
 
 			// Assertions
 			if assert.NoError(t, h.UpdateHandler(c)) {

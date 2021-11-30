@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/serverheaders"
 	"net/http"
@@ -15,6 +16,9 @@ func main() {
 	// Setup
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "method=${method}, uri=${uri}, status=${status}\n",
+	}))
 	handler := serverheaders.NewServerHandler()
 
 	//default answer
