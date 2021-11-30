@@ -27,7 +27,7 @@ func (h *ServerHandler) MainHandler(c echo.Context) error {
 
 	tableHead := "<table align=\"center\" border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:100%\">\n<thead>\n<tr>\n<th scope=\"col\">ID</th>\n<th scope=\"col\">Metric name</th>\n<th scope=\"col\">Value</th>\n<th scope=\"col\">Hyperlinc</th>\n</tr>\n</thead>\n<tbody>\n"
 	tableEnd := "</tbody>\n</table>\n"
-	result := "<html>\n<body>\n<h1>GAUGES:</h1>\n" + tableHead
+	result := "<html><head><title>Main Page</title></head>\n<body>\n<h1>GAUGES:</h1>\n" + tableHead
 	i := 0
 	for id, val := range h.metricMapGauge {
 		result += fmt.Sprintf("<tr><td>%d</td><td>%s</td><td>%f</td><td><a href=\"http://localhost:8080/value/gauge/%s\">http://localhost:8080/value/gauge/%s</a></td></tr>\n",
