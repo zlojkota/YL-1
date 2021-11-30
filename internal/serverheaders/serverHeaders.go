@@ -45,7 +45,7 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 		if !ok {
 			return c.NoContent(http.StatusNotFound)
 		}
-		return c.String(http.StatusOK, strconv.FormatFloat(val, 'g', -1, 64))
+		return c.String(http.StatusOK, strconv.FormatFloat(val, 'f', -1, 64))
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
