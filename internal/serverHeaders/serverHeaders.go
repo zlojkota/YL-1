@@ -6,11 +6,16 @@ import (
 	"strconv"
 )
 
-func NotFoundHandler(c echo.Context) error {
+type ServerHandler struct {
+	metricMapGauge   map[string]float64
+	metricMapCounter map[string]int64
+}
+
+func (h *ServerHandler) NotFoundHandler(c echo.Context) error {
 	return c.NoContent(http.StatusNotFound)
 }
 
-func UpdateHandler(c echo.Context) error {
+func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 
 	if c.Param("method") != "update" {
 		return c.NoContent(http.StatusNotFound)
