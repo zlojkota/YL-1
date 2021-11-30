@@ -63,6 +63,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			return c.NoContent(http.StatusBadRequest)
 		}
 		h.metricMapCounter[c.Param("metric")] += val
+		c.Response().Header().Set("myHeaderVal", c.Param("value"))
 		return c.NoContent(http.StatusOK)
 	case "gauge":
 		val, err := strconv.ParseFloat(c.Param("value"), 64)
@@ -70,6 +71,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			return c.NoContent(http.StatusBadRequest)
 		}
 		h.metricMapGauge[c.Param("metric")] = val
+		c.Response().Header().Set("myHeaderVal", c.Param("value"))
 		return c.NoContent(http.StatusOK)
 	default:
 		return c.NoContent(http.StatusNotImplemented)
