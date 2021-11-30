@@ -14,13 +14,21 @@ import (
 func main() {
 	// Setup
 	e := echo.New()
-	e.Logger.SetLevel(log.INFO)
+	e.Logger.SetLevel(log.DEBUG)
+	handler := serverheaders.NewServerHandler()
+
 	//default answer
-	handler := new(serverheaders.ServerHandler)
 	e.GET("/*", handler.NotFoundHandler)
 	e.POST("/*", handler.NotFoundHandler)
+
 	// update Handler
 	e.POST("/:method/:type/:metric/:value", handler.UpdateHandler)
+
+	// homePage Handler
+	e.GET("/", handler.MainHandler)
+
+	// getValue Handler
+	e.GET("/:method/:type/:metric", handler.GetHandler)
 
 	// Start server
 	go func() {
