@@ -249,6 +249,19 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 
 	h := NewServerHandler()
 
+	t.Run("Home page blank", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		// Assertions
+		if assert.NoError(t, h.MainHandler(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.NotContains(t, rec.Body.String(), "http://localhost:8080")
+		}
+	})
+
 	for _, itc := range tc {
 		t.Run(itc.name, func(t *testing.T) {
 			e := echo.New()
@@ -282,4 +295,17 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("Home page with data", func(t *testing.T) {
+		// Setup
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		// Assertions
+		if assert.NoError(t, h.MainHandler(c)) {
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.Contains(t, rec.Body.String(), "http://localhost:8080")
+		}
+	})
 }
