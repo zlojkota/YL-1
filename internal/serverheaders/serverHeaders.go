@@ -1,6 +1,7 @@
 package serverheaders
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
@@ -22,11 +23,31 @@ func (h *ServerHandler) NotFoundHandler(c echo.Context) error {
 	return c.NoContent(http.StatusNotFound)
 }
 
-/*
-TODO Write Main handler
-*/
 func (h *ServerHandler) MainHandler(c echo.Context) error {
-	return c.NoContent(http.StatusOK)
+
+	tableHead := "<table align=\"center\" border=\"1\" cellpadding=\"1\" cellspacing=\"1\" style=\"width:100%\">\n<thead>\n<tr>\n<th scope=\"col\">ID</th>\n<th scope=\"col\">Metric name</th>\n<th scope=\"col\">Value</th>\n<th scope=\"col\">Hyperlinc</th>\n</tr>\n</thead>\n<tbody>\n"
+	tableEnd := "</tbody>\n</table>\n"
+	result := "<html>\n<body>\n<h1>GAUGES:</h1>\n" + tableHead
+	i := 0
+	for id, val := range h.metricMapGauge {
+		result += fmt.Sprintf("<tr><td>%d</td><td>%s</td><td>%f</td><td><a href=\"http://localhost:8080/value/gauge/%s\">http://localhost:8080/value/gauge/%s</a></td></tr>\n",
+			i, id, val, id, id)
+		i++
+	}
+	result += tableEnd
+	result += "<h1>COUNTERS:</h1>\n"
+	result += tableHead
+	i = 0
+	for id, val := range h.metricMapCounter {
+		result += fmt.Sprintf("<tr><td>%d</td><td>%s</td><td>%d</td><td><a href=\"http://localhost:8080/value/gauge/%s\">http://localhost:8080/value/gauge/%s</a></td></tr>\n",
+			i, id, val, id, id)
+		i++
+	}
+	result += tableEnd
+	result += "</html>\n</body>"
+
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
+	return c.String(http.StatusOK, result)
 }
 
 func (h *ServerHandler) GetHandler(c echo.Context) error {
