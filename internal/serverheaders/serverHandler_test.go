@@ -277,7 +277,6 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 				if assert.NoError(t, h.UpdateHandler(c)) {
 					assert.Equal(t, itc.code, rec.Code)
 				}
-				break
 			case http.MethodGet:
 				c.SetPath("/:method/:type/:metric")
 				c.SetParamNames("method", "type", "metric")
@@ -289,7 +288,6 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 						assert.Equal(t, itc.value, rec.Body.String())
 					}
 				}
-				break
 			default:
 				panic("Tests not valid!")
 			}
