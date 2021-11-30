@@ -1,4 +1,4 @@
-package serverHeaders
+package serverheaders
 
 import (
 	"github.com/labstack/echo/v4"

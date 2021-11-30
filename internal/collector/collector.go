@@ -55,10 +55,6 @@ func (m *Collector) collect() {
 
 }
 
-func (p *Collector) String() string {
-	return fmt.Sprintf("%v", p)
-}
-
 func (p *Collector) Handle(duration time.Duration, handle CollectorHandle) {
 	p.duration = duration
 	p.handle = handle

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
-	"github.com/zlojkota/YL-1/internal/serverHeaders"
+	"github.com/zlojkota/YL-1/internal/serverheaders"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,7 +16,7 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.INFO)
 	//default answer
-	handler := new(serverHeaders.ServerHandler)
+	handler := new(serverheaders.ServerHandler)
 	e.GET("/*", handler.NotFoundHandler)
 	e.POST("/*", handler.NotFoundHandler)
 	// update Handler
