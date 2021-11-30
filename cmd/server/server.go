@@ -17,7 +17,7 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status} responseVal=${header:myHeaderVal}\n",
+		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status}\n",
 	}))
 	handler := serverheaders.NewServerHandler()
 
