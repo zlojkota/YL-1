@@ -62,7 +62,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		if err != nil {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		h.metricMapCounter[c.Param("metric")] = val
+		h.metricMapCounter[c.Param("metric")] += val
 		return c.NoContent(http.StatusOK)
 	case "gauge":
 		val, err := strconv.ParseFloat(c.Param("value"), 64)
