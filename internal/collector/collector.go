@@ -19,66 +19,73 @@ type Collector struct {
 	Done     <-chan struct{}
 }
 
-func (asiwantsoicallIliketheletterpsmall *Collector) collect() {
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
+
+func (col *Collector) collect() {
 
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
-	asiwantsoicallIliketheletterpsmall.gauge["Alloc"] = float64(rtm.Alloc)
-	asiwantsoicallIliketheletterpsmall.gauge["BuckHashSys"] = float64(rtm.BuckHashSys)
-	asiwantsoicallIliketheletterpsmall.gauge["Frees"] = float64(rtm.Frees)
-	asiwantsoicallIliketheletterpsmall.gauge["GCCPUFraction"] = float64(rtm.GCCPUFraction)
-	asiwantsoicallIliketheletterpsmall.gauge["GCSys"] = float64(rtm.GCSys)
-	asiwantsoicallIliketheletterpsmall.gauge["HeapAlloc"] = float64(rtm.HeapAlloc)
-	asiwantsoicallIliketheletterpsmall.gauge["HeapIdle"] = float64(rtm.HeapIdle)
-	asiwantsoicallIliketheletterpsmall.gauge["HeapInuse"] = float64(rtm.HeapInuse)
-	asiwantsoicallIliketheletterpsmall.gauge["HeapObjects"] = float64(rtm.HeapObjects)
-	asiwantsoicallIliketheletterpsmall.gauge["HeapReleased"] = float64(rtm.HeapReleased)
-	asiwantsoicallIliketheletterpsmall.gauge["HeapSys"] = float64(rtm.HeapSys)
-	asiwantsoicallIliketheletterpsmall.gauge["LastGC"] = float64(rtm.LastGC)
-	asiwantsoicallIliketheletterpsmall.gauge["Lookups"] = float64(rtm.Lookups)
-	asiwantsoicallIliketheletterpsmall.gauge["MCacheInuse"] = float64(rtm.MCacheInuse)
-	asiwantsoicallIliketheletterpsmall.gauge["MCacheSys"] = float64(rtm.MCacheSys)
-	asiwantsoicallIliketheletterpsmall.gauge["MSpanInuse"] = float64(rtm.MSpanInuse)
-	asiwantsoicallIliketheletterpsmall.gauge["MSpanSys"] = float64(rtm.MSpanSys)
-	asiwantsoicallIliketheletterpsmall.gauge["Mallocs"] = float64(rtm.Mallocs)
-	asiwantsoicallIliketheletterpsmall.gauge["NextGC"] = float64(rtm.NextGC)
-	asiwantsoicallIliketheletterpsmall.gauge["NumForcedGC"] = float64(rtm.NumForcedGC)
-	asiwantsoicallIliketheletterpsmall.gauge["NumGC"] = float64(rtm.NumGC)
-	asiwantsoicallIliketheletterpsmall.gauge["OtherSys"] = float64(rtm.OtherSys)
-	asiwantsoicallIliketheletterpsmall.gauge["PauseTotalNs"] = float64(rtm.PauseTotalNs)
-	asiwantsoicallIliketheletterpsmall.gauge["StackInuse"] = float64(rtm.StackInuse)
-	asiwantsoicallIliketheletterpsmall.gauge["StackSys"] = float64(rtm.StackSys)
-	asiwantsoicallIliketheletterpsmall.gauge["Sys"] = float64(rtm.Sys)
-	asiwantsoicallIliketheletterpsmall.counter["PollCount"]++
-	asiwantsoicallIliketheletterpsmall.gauge["RandomValue"] = float64(rand.Float32())
+	col.gauge["Alloc"] = float64(rtm.Alloc)
+	col.gauge["BuckHashSys"] = float64(rtm.BuckHashSys)
+	col.gauge["Frees"] = float64(rtm.Frees)
+	col.gauge["GCCPUFraction"] = float64(rtm.GCCPUFraction)
+	col.gauge["GCSys"] = float64(rtm.GCSys)
+	col.gauge["HeapAlloc"] = float64(rtm.HeapAlloc)
+	col.gauge["HeapIdle"] = float64(rtm.HeapIdle)
+	col.gauge["HeapInuse"] = float64(rtm.HeapInuse)
+	col.gauge["HeapObjects"] = float64(rtm.HeapObjects)
+	col.gauge["HeapReleased"] = float64(rtm.HeapReleased)
+	col.gauge["HeapSys"] = float64(rtm.HeapSys)
+	col.gauge["LastGC"] = float64(rtm.LastGC)
+	col.gauge["Lookups"] = float64(rtm.Lookups)
+	col.gauge["MCacheInuse"] = float64(rtm.MCacheInuse)
+	col.gauge["MCacheSys"] = float64(rtm.MCacheSys)
+	col.gauge["MSpanInuse"] = float64(rtm.MSpanInuse)
+	col.gauge["MSpanSys"] = float64(rtm.MSpanSys)
+	col.gauge["Mallocs"] = float64(rtm.Mallocs)
+	col.gauge["NextGC"] = float64(rtm.NextGC)
+	col.gauge["NumForcedGC"] = float64(rtm.NumForcedGC)
+	col.gauge["NumGC"] = float64(rtm.NumGC)
+	col.gauge["OtherSys"] = float64(rtm.OtherSys)
+	col.gauge["PauseTotalNs"] = float64(rtm.PauseTotalNs)
+	col.gauge["StackInuse"] = float64(rtm.StackInuse)
+	col.gauge["StackSys"] = float64(rtm.StackSys)
+	col.gauge["Sys"] = float64(rtm.Sys)
+	col.counter["PollCount"]++
+	col.gauge["RandomValue"] = float64(rand.Float32())
 
 }
 
-func (asiwantsoicallIliketheletterpsmall *Collector) Handle(duration time.Duration, handle CollectorHandle) {
-	asiwantsoicallIliketheletterpsmall.duration = duration
-	asiwantsoicallIliketheletterpsmall.handle = handle
+func (col *Collector) Handle(duration time.Duration, handle CollectorHandle) {
+	col.duration = duration
+	col.handle = handle
 }
 
-func (asiwantsoicallIliketheletterpsmall *Collector) Run() {
-	asiwantsoicallIliketheletterpsmall.gauge = map[string]float64{}
-	asiwantsoicallIliketheletterpsmall.counter = map[string]int64{}
-	asiwantsoicallIliketheletterpsmall.collect()
-	if asiwantsoicallIliketheletterpsmall.duration == 0 {
-		asiwantsoicallIliketheletterpsmall.duration = time.Second
+func (col *Collector) Run() {
+	col.gauge = map[string]float64{}
+	col.counter = map[string]int64{}
+	col.collect()
+	if col.duration == 0 {
+		col.duration = time.Second
 	}
-	tick := time.NewTicker(asiwantsoicallIliketheletterpsmall.duration)
+	tick := time.NewTicker(col.duration)
 	defer tick.Stop()
 	for {
 		select {
-		case <-asiwantsoicallIliketheletterpsmall.Done:
+		case <-col.Done:
 			return
 		case <-tick.C:
-			asiwantsoicallIliketheletterpsmall.collect()
-			if asiwantsoicallIliketheletterpsmall.handle == nil {
-				fmt.Print(asiwantsoicallIliketheletterpsmall)
+			col.collect()
+			if col.handle == nil {
+				fmt.Print(col)
 			} else {
-				asiwantsoicallIliketheletterpsmall.handle.HandleData(asiwantsoicallIliketheletterpsmall.counter, asiwantsoicallIliketheletterpsmall.gauge)
+				col.handle.HandleData(col.counter, col.gauge)
 			}
 		}
 	}
