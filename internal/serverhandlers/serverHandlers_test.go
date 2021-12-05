@@ -89,16 +89,6 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 			reqMethod: http.MethodPost,
 		},
 		{
-			uri:       "/updater/gauge/testGauge/100",
-			code:      http.StatusNotFound,
-			name:      "NotFound POST /updater/gauge/testGauge/100",
-			method:    "updater",
-			typeName:  "gauge",
-			metric:    "testGauge",
-			value:     "100",
-			reqMethod: http.MethodPost,
-		},
-		{
 			name:      "Get Unknown counter",
 			uri:       "/value/counter/Testcounter321",
 			method:    "value",

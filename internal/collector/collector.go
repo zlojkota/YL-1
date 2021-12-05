@@ -12,10 +12,11 @@ type CollectorHandle interface {
 }
 
 type Collector struct {
-	counter  map[string]int64
-	gauge    map[string]float64
-	handle   CollectorHandle
-	duration time.Duration
+	counter      map[string]int64
+	gauge        map[string]float64
+	handle       CollectorHandle
+	poolinterval time.Duration
+	Done         chan bool
 }
 
 func (col *Collector) collect() {
@@ -54,22 +55,25 @@ func (col *Collector) collect() {
 
 }
 
-func (col *Collector) Handle(duration time.Duration, handle CollectorHandle) {
-	col.duration = duration
+func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle) {
+	col.poolinterval = poolinterval
 	col.handle = handle
+	col.Done = make(chan bool)
 }
 
 func (col *Collector) Run() {
 	col.gauge = map[string]float64{}
 	col.counter = map[string]int64{}
 	col.collect()
-	if col.duration == 0 {
-		col.duration = time.Second
+	if col.poolinterval == 0 {
+		col.poolinterval = time.Second
 	}
-	tick := time.NewTicker(col.duration)
+	tick := time.NewTicker(col.poolinterval)
 	defer tick.Stop()
 	for {
 		select {
+		case <-col.Done:
+			return
 		case <-tick.C:
 			col.collect()
 			if col.handle == nil {
@@ -77,6 +81,7 @@ func (col *Collector) Run() {
 			} else {
 				col.handle.SendMetrics(col.counter, col.gauge)
 			}
+
 		}
 	}
 }

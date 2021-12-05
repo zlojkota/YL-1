@@ -26,13 +26,13 @@ func main() {
 	e.POST("/*", handler.NotFoundHandler)
 
 	// update Handler
-	e.POST("/:method/:type/:metric/:value", handler.UpdateHandler)
+	e.POST("/update/:type/:metric/:value", handler.UpdateHandler)
 
 	// homePage Handler
 	e.GET("/", handler.MainHandler)
 
 	// getValue Handler
-	e.GET("/:method/:type/:metric", handler.GetHandler)
+	e.GET("/update/:type/:metric", handler.GetHandler)
 
 	// Start server
 	go func() {

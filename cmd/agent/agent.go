@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/labstack/gommon/log"
@@ -48,6 +51,18 @@ func main() {
 	var agent Agent
 	agent.agentInit(time.Second)
 	t.Handle(2*time.Second, &agent)
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigChan
+		fmt.Println("Stopping")
+		t.Done <- true
+	}()
 	t.Run()
 
 }
