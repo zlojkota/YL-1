@@ -5,7 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
-	"github.com/zlojkota/YL-1/internal/serverheaders"
+	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,7 +19,7 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status}\n",
 	}))
-	handler := serverheaders.NewServerHandler()
+	handler := serverhandlers.NewServerHandler()
 
 	//default answer
 	e.GET("/*", handler.NotFoundHandler)
