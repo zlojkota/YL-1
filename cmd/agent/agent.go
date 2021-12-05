@@ -31,7 +31,12 @@ func (p *Agent) SendMetrics(counter map[string]int64, gauge map[string]float64) 
 			log.Error(err)
 			return
 		}
-		defer res.Body.Close()
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				log.Error(err)
+			}
+		}()
 	}
 	for key, val := range counter {
 		strval := strconv.FormatInt(val, 10)
@@ -40,7 +45,12 @@ func (p *Agent) SendMetrics(counter map[string]int64, gauge map[string]float64) 
 			log.Error(err)
 			return
 		}
-		defer res.Body.Close()
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				log.Error(err)
+			}
+		}()
 	}
 
 }
@@ -60,7 +70,7 @@ func main() {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigChan
-		fmt.Println("Stopping")
+		log.Error("Stopping")
 		t.Done <- true
 	}()
 	t.Run()

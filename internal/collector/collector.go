@@ -1,7 +1,7 @@
 package collector
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 	"runtime"
 	"time"
@@ -77,7 +77,7 @@ func (col *Collector) Run() {
 		case <-tick.C:
 			col.collect()
 			if col.handle == nil {
-				fmt.Print(col)
+				log.Println(col)
 			} else {
 				col.handle.SendMetrics(col.counter, col.gauge)
 			}
