@@ -32,7 +32,7 @@ func main() {
 	e.GET("/", handler.MainHandler)
 
 	// getValue Handler
-	e.GET("/update/:type/:metric", handler.GetHandler)
+	e.GET("/value/:type/:metric", handler.GetHandler)
 
 	// Start server
 	go func() {
