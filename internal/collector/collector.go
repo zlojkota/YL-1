@@ -1,22 +1,22 @@
 package collector
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 	"runtime"
 	"time"
 )
 
 type CollectorHandle interface {
-	HandleData(counter map[string]int64, gauge map[string]float64)
+	SendMetrics(counter map[string]int64, gauge map[string]float64)
 }
 
 type Collector struct {
-	counter  map[string]int64
-	gauge    map[string]float64
-	handle   CollectorHandle
-	duration time.Duration
-	Done     <-chan struct{}
+	counter      map[string]int64
+	gauge        map[string]float64
+	handle       CollectorHandle
+	poolinterval time.Duration
+	Done         chan bool
 }
 
 type Metrics struct {
@@ -62,19 +62,20 @@ func (col *Collector) collect() {
 
 }
 
-func (col *Collector) Handle(duration time.Duration, handle CollectorHandle) {
-	col.duration = duration
+func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle) {
+	col.poolinterval = poolinterval
 	col.handle = handle
+	col.Done = make(chan bool)
 }
 
 func (col *Collector) Run() {
 	col.gauge = map[string]float64{}
 	col.counter = map[string]int64{}
 	col.collect()
-	if col.duration == 0 {
-		col.duration = time.Second
+	if col.poolinterval == 0 {
+		col.poolinterval = time.Second
 	}
-	tick := time.NewTicker(col.duration)
+	tick := time.NewTicker(col.poolinterval)
 	defer tick.Stop()
 	for {
 		select {
@@ -83,10 +84,11 @@ func (col *Collector) Run() {
 		case <-tick.C:
 			col.collect()
 			if col.handle == nil {
-				fmt.Print(col)
+				log.Println(col)
 			} else {
-				col.handle.HandleData(col.counter, col.gauge)
+				col.handle.SendMetrics(col.counter, col.gauge)
 			}
+
 		}
 	}
 }

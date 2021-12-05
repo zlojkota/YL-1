@@ -2,41 +2,57 @@ package main
 
 import (
 	"fmt"
-	"github.com/zlojkota/YL-1/internal/collector"
 	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
 	"time"
+
+	"github.com/labstack/gommon/log"
+	"github.com/zlojkota/YL-1/internal/collector"
 )
 
 type Agent struct {
-	duration time.Duration
+	poolinterval time.Duration
 }
 
-func (p *Agent) agentInit(duration time.Duration) {
-	p.duration = duration
+func (p *Agent) agentInit(poolinterval time.Duration) {
+	p.poolinterval = poolinterval
 }
 
-func (p *Agent) HandleData(counter map[string]int64, gauge map[string]float64) {
+func (p *Agent) SendMetrics(counter map[string]int64, gauge map[string]float64) {
+	const serverAddr = "http://localhost:8080"
 	for key, val := range gauge {
-		strval := fmt.Sprintf("%f", val)
-		res, err := http.Post("http://localhost:8080/update/gauge/"+string(key)+"/"+strval, "text/plain", nil)
+		strval := strconv.FormatFloat(val, 'f', -1, 64)
+		url := fmt.Sprintf("%s/update/gauge/%s/%s", serverAddr, key, strval)
+		res, err := http.Post(url, "text/plain", nil)
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err)
+			return
 		}
-		err = res.Body.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				log.Error(err)
+				return
+			}
+		}()
 	}
 	for key, val := range counter {
-		strval := fmt.Sprintf("%d", val)
+		strval := strconv.FormatInt(val, 10)
 		res, err := http.Post("http://localhost:8080/update/counter/"+string(key)+"/"+strval, "text/plain", nil)
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err)
+			return
 		}
-		err = res.Body.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
+		defer func() {
+			err := res.Body.Close()
+			if err != nil {
+				log.Error(err)
+				return
+			}
+		}()
 	}
 
 }
@@ -47,6 +63,18 @@ func main() {
 	var agent Agent
 	agent.agentInit(time.Second)
 	t.Handle(2*time.Second, &agent)
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigChan
+		log.Error("Stopping")
+		t.Done <- true
+	}()
 	t.Run()
 
 }

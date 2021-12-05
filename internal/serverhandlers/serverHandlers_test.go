@@ -1,11 +1,12 @@
-package serverheaders
+package serverhandlers
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestServerHandler_NotFoundHandler(t *testing.T) {
@@ -84,16 +85,6 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 			method:    "update",
 			typeName:  "unknown",
 			metric:    "testCounter",
-			value:     "100",
-			reqMethod: http.MethodPost,
-		},
-		{
-			uri:       "/updater/gauge/testGauge/100",
-			code:      http.StatusNotFound,
-			name:      "NotFound POST /updater/gauge/testGauge/100",
-			method:    "updater",
-			typeName:  "gauge",
-			metric:    "testGauge",
 			value:     "100",
 			reqMethod: http.MethodPost,
 		},
@@ -270,7 +261,7 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 			c := e.NewContext(req, rec)
 			switch itc.reqMethod {
 			case http.MethodPost:
-				c.SetPath("/:method/:type/:metric/:value")
+				c.SetPath("/update/:type/:metric/:value")
 				c.SetParamNames("method", "type", "metric", "value")
 				c.SetParamValues(itc.method, itc.typeName, itc.metric, itc.value)
 				// Assertions
@@ -278,7 +269,7 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 					assert.Equal(t, itc.code, rec.Code)
 				}
 			case http.MethodGet:
-				c.SetPath("/:method/:type/:metric")
+				c.SetPath("/value/:type/:metric")
 				c.SetParamNames("method", "type", "metric")
 				c.SetParamValues(itc.method, itc.typeName, itc.metric)
 				// Assertions
