@@ -35,6 +35,7 @@ func (p *Agent) SendMetrics(counter map[string]int64, gauge map[string]float64) 
 			err := res.Body.Close()
 			if err != nil {
 				log.Error(err)
+				return
 			}
 		}()
 	}
@@ -49,6 +50,7 @@ func (p *Agent) SendMetrics(counter map[string]int64, gauge map[string]float64) 
 			err := res.Body.Close()
 			if err != nil {
 				log.Error(err)
+				return
 			}
 		}()
 	}
