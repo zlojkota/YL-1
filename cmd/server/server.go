@@ -17,7 +17,7 @@ func main() {
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status}\n",
+		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status} Content-Type=${header:Content-Type}\n",
 	}))
 	handler := serverhandlers.NewServerHandler()
 
@@ -27,6 +27,7 @@ func main() {
 
 	// update Handler
 	e.POST("/update/:type/:metric/:value", handler.UpdateHandler)
+	e.POST("/update/", handler.UpdateJSONHandler)
 
 	// homePage Handler
 	e.GET("/", handler.MainHandler)

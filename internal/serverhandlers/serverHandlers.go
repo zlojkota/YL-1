@@ -37,7 +37,11 @@ func (h *ServerHandler) MainHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal ERROR")
 	}
 	var buf bytes.Buffer
-	t.Execute(&buf, *h)
+	err = t.Execute(&buf, *h)
+	if err != nil {
+		log.Error(err)
+		return c.String(http.StatusInternalServerError, "Internal ERROR")
+	}
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
 	return c.String(http.StatusOK, buf.String())
 }
@@ -81,4 +85,11 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
+}
+
+func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
+	if c.Request().Header.Get("Content-Type") == "application/json" {
+		return c.NoContent(http.StatusOK)
+	}
+	return c.NoContent(http.StatusNotFound)
 }
