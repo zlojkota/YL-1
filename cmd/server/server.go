@@ -34,6 +34,7 @@ func main() {
 
 	// getValue Handler
 	e.GET("/value/:type/:metric", handler.GetHandler)
+	e.POST("/value/", handler.GetJSONHandler)
 
 	// Start server
 	go func() {

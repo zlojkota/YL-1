@@ -73,6 +73,25 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 	}
 }
 
+func (h *ServerHandler) GetJSONHandler(c echo.Context) error {
+	var data Metrics
+	err := json.NewDecoder(c.Request().Body).Decode(&data)
+	if err != nil {
+		return c.NoContent(http.StatusNotImplemented)
+	}
+	switch data.MType {
+	case counter:
+		delta := h.MetricMapCounter[data.ID]
+		data.Delta = &delta
+	case gauge:
+		value := h.MetricMapGauge[data.ID]
+		data.Value = &value
+	default:
+		return c.NoContent(http.StatusNotImplemented)
+	}
+	return c.JSON(http.StatusOK, data)
+}
+
 func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 
 	switch c.Param("type") {
@@ -100,7 +119,7 @@ func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
 		var data Metrics
 		err := json.NewDecoder(c.Request().Body).Decode(&data)
 		if err != nil {
-			return err
+			return c.NoContent(http.StatusNotImplemented)
 		}
 		switch data.MType {
 		case counter:
