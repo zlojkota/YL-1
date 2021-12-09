@@ -33,7 +33,7 @@ func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
 				log.Error(errEnc)
 				return
 			}
-			url := fmt.Sprintf("%s/update", serverAddr)
+			url := fmt.Sprintf("%s/update/", serverAddr)
 			body := bytes.NewReader(jsonData)
 			res, err := http.Post(url, "application/json", body)
 			if err != nil {
