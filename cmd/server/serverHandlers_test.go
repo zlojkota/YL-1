@@ -1,4 +1,4 @@
-package serverhandlers
+package main
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/zlojkota/YL-1/internal/serverhandlers"
 )
 
 func TestServerHandler_NotFoundHandler(t *testing.T) {
@@ -16,7 +17,7 @@ func TestServerHandler_NotFoundHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		h := NewServerHandler()
+		h := serverhandlers.NewServerHandler()
 
 		// Assertions
 		if assert.NoError(t, h.NotFoundHandler(c)) {
@@ -238,7 +239,7 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 		},
 	}
 
-	h := NewServerHandler()
+	h := serverhandlers.NewServerHandler()
 
 	t.Run("Home page blank", func(t *testing.T) {
 		// Setup
