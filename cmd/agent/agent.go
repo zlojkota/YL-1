@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -49,7 +50,7 @@ func main() {
 	}
 
 	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________ENV:")
-	fmt.Println(worker)
+	fmt.Println(json.Marshal(worker))
 
 	if *worker.ServerAddr == "127.0.0.1:8080" {
 		worker.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
@@ -63,7 +64,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________CMD:")
-	fmt.Println(worker)
+	fmt.Println(json.Marshal(worker))
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	t.Handle(*worker.PoolInterval, &agent)

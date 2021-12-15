@@ -3,6 +3,7 @@ package serverhandlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/gommon/log"
 	"html/template"
 	"net/http"
@@ -132,8 +133,8 @@ func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
 		if err != nil {
 			return c.NoContent(http.StatusNotImplemented)
 		}
-		log.Print(data)
-		log.Print(h.MetricMap[data.ID])
+		fmt.Println(json.Marshal(data))
+		fmt.Println(json.Marshal(h.MetricMap[data.ID]))
 		switch data.MType {
 		case counter:
 			updateValue := h.MetricMap[data.ID]
