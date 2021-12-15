@@ -43,16 +43,20 @@ func main() {
 	qwe, _ := json.Marshal(cfg)
 	fmt.Println(string(qwe))
 
-	if *cfg.ServerAddr == "127.0.0.1:8080" {
+	if _, ok := os.LookupEnv("ADDRESS"); !ok {
+		fmt.Println("ADDRESS not in ENV")
 		cfg.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	}
-	if *cfg.StoreFile == "/tmp/devops-metrics-db.json" {
+	if _, ok := os.LookupEnv("STORE_FILE"); !ok {
+		fmt.Println("STORE_FILE not in ENV")
 		cfg.StoreFile = flag.String("f", "/tmp/devops-metrics-db.json", "STORE_FILE")
 	}
-	if *cfg.Restore {
+	if _, ok := os.LookupEnv("RESTORE"); !ok {
+		fmt.Println("RESTORE not in ENV")
 		cfg.Restore = flag.Bool("r", true, "RESTORE")
 	}
-	if *cfg.StoreInterval == 300*time.Second {
+	if _, ok := os.LookupEnv("STORE_INTERVAL"); !ok {
+		fmt.Println("STORE_INTERVAL not in ENV")
 		cfg.StoreInterval = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
 	}
 	flag.Parse()
