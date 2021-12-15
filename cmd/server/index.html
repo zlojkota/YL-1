@@ -15,10 +15,10 @@
     </tr>
     </thead>
     <tbody>
-    {{range $index, $element := .MetricMapGauge}}
+    {{range $index, $element := .MetricMap}}
     <tr>
         <td>{{$index}}</td>
-        <td>{{$element}}</td>
+        <td>{{$element.Value}}</td>
         <td><a href="http://localhost:8080/value/gauge/{{$index}}">http://localhost:8080/value/gauge/{{$index}}</a></td>
     </tr>
     {{end}}
@@ -35,10 +35,10 @@
     </tr>
     </thead>
     <tbody>
-    {{range $index, $element := .MetricMapCounter}}
+    {{range $index, $element := .MetricMap}}
     <tr>
         <td>{{$index}}</td>
-        <td>{{$element}}</td>
+        <td>{{$element.Delta}}</td>
         <td><a href="http://localhost:8080/value/counter/{{$index}}">http://localhost:8080/value/counter/{{$index}}</a></td>
     </tr>
     {{end}}

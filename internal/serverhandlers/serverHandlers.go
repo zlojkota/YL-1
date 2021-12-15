@@ -11,14 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ServerHandler struct {
-	MetricMapGauge   map[string]float64
-	MetricMapCounter map[string]int64
-}
-
-const counter = "counter"
-const gauge = "gauge"
-
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
@@ -26,10 +18,16 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
+type ServerHandler struct {
+	MetricMap map[string]*Metrics
+}
+
+const counter = "counter"
+const gauge = "gauge"
+
 func NewServerHandler() *ServerHandler {
 	p := new(ServerHandler)
-	p.MetricMapCounter = make(map[string]int64)
-	p.MetricMapGauge = make(map[string]float64)
+	p.MetricMap = make(map[string]*Metrics)
 	return p
 }
 
@@ -57,17 +55,17 @@ func (h *ServerHandler) MainHandler(c echo.Context) error {
 func (h *ServerHandler) GetHandler(c echo.Context) error {
 	switch typeM := c.Param("type"); typeM {
 	case counter:
-		val, ok := h.MetricMapCounter[c.Param("metric")]
+		val, ok := h.MetricMap[c.Param("metric")]
 		if !ok {
 			return c.NoContent(http.StatusNotFound)
 		}
-		return c.String(http.StatusOK, strconv.FormatInt(val, 10))
+		return c.String(http.StatusOK, strconv.FormatInt(*val.Delta, 10))
 	case gauge:
-		val, ok := h.MetricMapGauge[c.Param("metric")]
+		val, ok := h.MetricMap[c.Param("metric")]
 		if !ok {
 			return c.NoContent(http.StatusNotFound)
 		}
-		return c.String(http.StatusOK, strconv.FormatFloat(val, 'f', -1, 64))
+		return c.String(http.StatusOK, strconv.FormatFloat(*val.Value, 'f', -1, 64))
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
@@ -79,35 +77,44 @@ func (h *ServerHandler) GetJSONHandler(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusNotImplemented)
 	}
-	switch data.MType {
-	case counter:
-		delta := h.MetricMapCounter[data.ID]
-		data.Delta = &delta
-	case gauge:
-		value := h.MetricMapGauge[data.ID]
-		data.Value = &value
-	default:
-		return c.NoContent(http.StatusNotImplemented)
-	}
-	return c.JSON(http.StatusOK, data)
+	return c.JSON(http.StatusOK, h.MetricMap[data.ID])
 }
 
 func (h *ServerHandler) UpdateHandler(c echo.Context) error {
-
 	switch c.Param("type") {
 	case counter:
 		val, err := strconv.ParseInt(c.Param("value"), 0, 64)
 		if err != nil {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		h.MetricMapCounter[c.Param("metric")] += val
+		updateValue := h.MetricMap[c.Param("metric")]
+		if updateValue == nil {
+			updateValue = &Metrics{
+				ID:    c.Param("metric"),
+				MType: counter,
+				Delta: &val,
+			}
+		} else {
+			*updateValue.Delta += val
+		}
+		h.MetricMap[c.Param("metric")] = updateValue
 		return c.NoContent(http.StatusOK)
 	case gauge:
 		val, err := strconv.ParseFloat(c.Param("value"), 64)
 		if err != nil {
 			return c.NoContent(http.StatusBadRequest)
 		}
-		h.MetricMapGauge[c.Param("metric")] = val
+		updateValue := h.MetricMap[c.Param("metric")]
+		if updateValue == nil {
+			updateValue = &Metrics{
+				ID:    c.Param("metric"),
+				MType: gauge,
+				Value: &val,
+			}
+		} else {
+			updateValue.Value = &val
+		}
+		h.MetricMap[c.Param("metric")] = updateValue
 		return c.NoContent(http.StatusOK)
 	default:
 		return c.NoContent(http.StatusNotImplemented)
@@ -123,14 +130,24 @@ func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
 		}
 		switch data.MType {
 		case counter:
-			h.MetricMapCounter[data.ID] += *data.Delta
+			updateValue := h.MetricMap[data.ID]
+			*updateValue.Delta += *data.Delta
+			h.MetricMap[data.ID] = updateValue
 			return c.NoContent(http.StatusOK)
 		case gauge:
-			h.MetricMapGauge[data.ID] = *data.Value
+			h.MetricMap[data.ID] = &data
 			return c.NoContent(http.StatusOK)
 		default:
 			return c.NoContent(http.StatusNotImplemented)
 		}
 	}
 	return c.NoContent(http.StatusNotFound)
+}
+
+func (h *ServerHandler) GetterMetrics() map[string]*Metrics {
+	return h.MetricMap
+}
+
+func (h *ServerHandler) SetterMetrics(metrics map[string]*Metrics) {
+	h.MetricMap = metrics
 }
