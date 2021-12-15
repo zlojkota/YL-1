@@ -51,7 +51,7 @@ func main() {
 
 	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________ENV:")
 	qwe, _ := json.Marshal(worker)
-	fmt.Println(qwe)
+	fmt.Println(string(qwe))
 
 	if *worker.ServerAddr == "127.0.0.1:8080" {
 		worker.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
@@ -66,7 +66,7 @@ func main() {
 
 	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________CMD:")
 	ewq, _ := json.Marshal(worker)
-	fmt.Println(ewq)
+	fmt.Println(string(ewq))
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	t.Handle(*worker.PoolInterval, &agent)

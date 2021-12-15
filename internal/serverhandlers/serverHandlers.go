@@ -134,9 +134,9 @@ func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
 			return c.NoContent(http.StatusNotImplemented)
 		}
 		ewq, _ := json.Marshal(data)
-		fmt.Println(ewq)
+		fmt.Println(string(ewq))
 		qwe, _ := json.Marshal(h.MetricMap[data.ID])
-		fmt.Println(qwe)
+		fmt.Println(string(qwe))
 
 		switch data.MType {
 		case counter:

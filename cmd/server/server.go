@@ -41,7 +41,7 @@ func main() {
 
 	fmt.Println("SSSSSSSSSSSSSSSSSSSSSSSS________ENV:")
 	qwe, _ := json.Marshal(cfg)
-	fmt.Println(qwe)
+	fmt.Println(string(qwe))
 
 	if *cfg.ServerAddr == "127.0.0.1:8080" {
 		cfg.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
@@ -59,7 +59,7 @@ func main() {
 
 	fmt.Println("SSSSSSSSSSSSSSSSSSSSSSSS________CMD:")
 	ewq, _ := json.Marshal(cfg)
-	fmt.Println(ewq)
+	fmt.Println(string(ewq))
 
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
