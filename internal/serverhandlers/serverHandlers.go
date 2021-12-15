@@ -20,6 +20,7 @@ type Metrics struct {
 
 type ServerHandler struct {
 	MetricMap map[string]*Metrics
+	IndexPath string
 }
 
 const counter = "counter"
@@ -28,6 +29,7 @@ const gauge = "gauge"
 func NewServerHandler() *ServerHandler {
 	p := new(ServerHandler)
 	p.MetricMap = make(map[string]*Metrics)
+	p.IndexPath = "./internal/httpRoot/index.html"
 	return p
 }
 
@@ -37,7 +39,7 @@ func (h *ServerHandler) NotFoundHandler(c echo.Context) error {
 
 func (h *ServerHandler) MainHandler(c echo.Context) error {
 
-	t, err := template.ParseFiles("index.html")
+	t, err := template.ParseFiles(h.IndexPath)
 	if err != nil {
 		log.Error(err)
 		return c.String(http.StatusInternalServerError, "Internal ERROR")

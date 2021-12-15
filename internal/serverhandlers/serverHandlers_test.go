@@ -239,7 +239,7 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 	}
 
 	h := NewServerHandler()
-
+	h.IndexPath = "../../internal/httpRoot/index.html"
 	t.Run("Home page blank", func(t *testing.T) {
 		// Setup
 		e := echo.New()
