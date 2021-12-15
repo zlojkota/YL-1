@@ -14,9 +14,9 @@ import (
 )
 
 type Worker struct {
-	ServerAddr     string `env:"ADDRESS"`
-	ReportInterval int64  `env:"REPORT_INTERVAL"`
-	PoolInterval   int64  `env:"POLL_INTERVAL"`
+	ServerAddr     string        `env:"ADDRESS"`
+	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+	PoolInterval   time.Duration `env:"POLL_INTERVAL"`
 }
 
 func (p *Worker) RequestServe(req *http.Request) {
@@ -40,10 +40,10 @@ func main() {
 		log.Fatal(err)
 	}
 	if worker.PoolInterval == 0 {
-		worker.PoolInterval = 2
+		worker.PoolInterval = 2 * time.Second
 	}
 	agent.InitAgent(&worker, worker.ServerAddr)
-	t.Handle(time.Duration(worker.PoolInterval)*time.Second, &agent)
+	t.Handle(worker.PoolInterval, &agent)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan,
