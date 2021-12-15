@@ -1,16 +1,16 @@
-package YL_1
+package yl1
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/zlojkota/YL-1/internal/agentCollector"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/zlojkota/YL-1/internal/agentcollector"
 	"github.com/zlojkota/YL-1/internal/collector"
+	"github.com/zlojkota/YL-1/internal/serverhandlers"
 )
 
 type Worker struct {
@@ -65,7 +65,7 @@ func (p *Worker) InitWorker(t *testing.T) {
 func TestAllapp(t *testing.T) {
 
 	var col collector.Collector
-	var agent agentCollector.Agent
+	var agent agentcollector.Agent
 	var worker Worker
 	worker.InitWorker(t)
 	agent.InitAgent(&worker)

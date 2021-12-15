@@ -1,4 +1,4 @@
-package agentCollector
+package agentcollector
 
 import (
 	"bytes"
@@ -62,7 +62,7 @@ func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
 				strVal = strconv.FormatFloat(*val.Value, 'f', -1, 64)
 			}
 			url := fmt.Sprintf("%s/update/%s/%s/%s", serverAddr, val.MType, val.ID, strVal)
-			res, err := http.NewRequest(http.MethodGet, url, nil)
+			res, err := http.NewRequest(http.MethodPost, url, nil)
 			if err != nil {
 				log.Error(err)
 				return
