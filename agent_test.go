@@ -69,7 +69,7 @@ func TestAllapp(t *testing.T) {
 	var worker Worker
 	worker.InitWorker(t)
 	agent.InitAgent(&worker)
-	col.Handle(2*time.Second, &agent)
+	col.Handle(2*time.Millisecond, &agent)
 	go func() {
 		col.Run()
 	}()
@@ -81,9 +81,9 @@ func TestAllapp(t *testing.T) {
 		oldMapGauge = make(map[string]float64)
 		oldMapCounter = make(map[string]int64)
 
-		tick := time.NewTicker(4 * time.Second)
+		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
-		iter := 2
+		iter := 20
 		loop := true
 		updatedCounter := false
 		updatedGauge := false
@@ -96,7 +96,7 @@ func TestAllapp(t *testing.T) {
 			if iter == 0 {
 				col.Done <- true
 				loop = false
-			} else if iter != 2 {
+			} else if iter != 20 {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
@@ -129,12 +129,12 @@ func TestAllapp(t *testing.T) {
 		oldMapGauge = make(map[string]float64)
 		oldMapCounter = make(map[string]int64)
 
-		tick := time.NewTicker(4 * time.Second)
+		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
 
 		updatedCounter := false
 		updatedGauge := false
-		iter := 2
+		iter := 20
 		loop := true
 		for loop {
 			<-tick.C
@@ -143,7 +143,7 @@ func TestAllapp(t *testing.T) {
 
 			if iter == 0 {
 				loop = false
-			} else if iter != 2 {
+			} else if iter != 20 {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
