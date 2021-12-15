@@ -31,6 +31,7 @@ func (ssh *StorageState) Restore(storeFile string) {
 	mm := make(map[string]*serverhandlers.Metrics)
 	decoder.Decode(&mm)
 	ssh.serverHandler.MetricMap = mm
+	file.Close()
 }
 
 func (ssh *StorageState) Run(storeInterval time.Duration, storeFile string) {

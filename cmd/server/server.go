@@ -73,10 +73,6 @@ func main() {
 		helper.Restore(cfg.StoreFile)
 	}
 
-	go func() {
-		helper.Run(cfg.StoreInterval, cfg.StoreFile)
-	}()
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan,
 		syscall.SIGHUP,
@@ -94,6 +90,7 @@ func main() {
 		}
 	}()
 
+	go helper.Run(cfg.StoreInterval, cfg.StoreFile)
 	if err := e.Start(cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}
