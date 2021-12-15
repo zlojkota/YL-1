@@ -83,7 +83,7 @@ func TestAllapp(t *testing.T) {
 
 		tick := time.NewTicker(4 * time.Second)
 		defer tick.Stop()
-		iter := 20
+		iter := 2
 		loop := true
 		updatedCounter := false
 		updatedGauge := false
@@ -96,7 +96,7 @@ func TestAllapp(t *testing.T) {
 			if iter == 0 {
 				col.Done <- true
 				loop = false
-			} else if iter != 20 {
+			} else if iter != 2 {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
@@ -134,7 +134,7 @@ func TestAllapp(t *testing.T) {
 
 		updatedCounter := false
 		updatedGauge := false
-		iter := 5
+		iter := 2
 		loop := true
 		for loop {
 			<-tick.C
@@ -143,7 +143,7 @@ func TestAllapp(t *testing.T) {
 
 			if iter == 0 {
 				loop = false
-			} else if iter != 20 {
+			} else if iter != 2 {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
