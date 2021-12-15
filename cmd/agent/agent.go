@@ -15,9 +15,9 @@ import (
 )
 
 type Worker struct {
-	ServerAddr     string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
-	ReportInterval time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
-	PoolInterval   time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
+	ServerAddr     *string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+	ReportInterval *time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
+	PoolInterval   *time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
 }
 
 var worker Worker
@@ -35,10 +35,6 @@ func (p *Worker) RequestServe(req *http.Request) {
 
 func init() {
 
-	flag.StringVar(&worker.ServerAddr, "a", "127.0.0.1:8080", "ADDRESS")
-	flag.DurationVar(&worker.ReportInterval, "r", 10*time.Second, "REPORT_INTERVAL")
-	flag.DurationVar(&worker.PoolInterval, "p", 2*time.Second, "POLL_INTERVAL")
-
 }
 
 func main() {
@@ -50,8 +46,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	agent.InitAgent(&worker, worker.ServerAddr)
-	t.Handle(worker.PoolInterval, &agent)
+
+	if *worker.ServerAddr == "127.0.0.1:8080" {
+		worker.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
+	}
+	if *worker.ReportInterval == 10*time.Second {
+		worker.ReportInterval = flag.Duration("r", 10*time.Second, "REPORT_INTERVAL")
+	}
+	if *worker.PoolInterval == 2*time.Second {
+		worker.PoolInterval = flag.Duration("p", 2*time.Second, "POLL_INTERVAL")
+	}
+
+	agent.InitAgent(&worker, *worker.ServerAddr)
+	t.Handle(*worker.PoolInterval, &agent)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan,
