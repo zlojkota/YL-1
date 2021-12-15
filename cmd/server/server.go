@@ -61,6 +61,9 @@ func main() {
 	flag.Parse()
 
 	e := echo.New()
+	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+		Level: 5,
+	}))
 	e.Logger.SetLevel(log.DEBUG)
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status} Content-Type=${header:Content-Type}\n",
