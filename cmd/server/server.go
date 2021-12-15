@@ -46,18 +46,30 @@ func main() {
 	if _, ok := os.LookupEnv("ADDRESS"); !ok {
 		fmt.Println("ADDRESS not in ENV")
 		cfg.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
+	} else {
+		fmt.Println("ADDRESS IN ENV")
+		_ = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	}
 	if _, ok := os.LookupEnv("STORE_FILE"); !ok {
 		fmt.Println("STORE_FILE not in ENV")
 		cfg.StoreFile = flag.String("f", "/tmp/devops-metrics-db.json", "STORE_FILE")
+	} else {
+		fmt.Println("STORE_FILE IN ENV")
+		_ = flag.String("f", "/tmp/devops-metrics-db.json", "STORE_FILE")
 	}
 	if _, ok := os.LookupEnv("RESTORE"); !ok {
 		fmt.Println("RESTORE not in ENV")
 		cfg.Restore = flag.Bool("r", true, "RESTORE")
+	} else {
+		fmt.Println("RESTORE IN ENV")
+		_ = flag.Bool("r", true, "RESTORE")
 	}
 	if _, ok := os.LookupEnv("STORE_INTERVAL"); !ok {
 		fmt.Println("STORE_INTERVAL not in ENV")
 		cfg.StoreInterval = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
+	} else {
+		fmt.Println("STORE_INTERVAL IN ENV")
+		_ = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
 	}
 	flag.Parse()
 
