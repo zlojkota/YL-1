@@ -36,8 +36,8 @@ func (p *Worker) RequestServe(req *http.Request) {
 func init() {
 
 	flag.StringVar(&worker.ServerAddr, "a", "127.0.0.1:8080", "ADDRESS")
-	flag.DurationVar(&worker.ReportInterval, "i", 10*time.Second, "REPORT_INTERVAL")
-	flag.DurationVar(&worker.PoolInterval, "i", 2*time.Second, "POLL_INTERVAL")
+	flag.DurationVar(&worker.ReportInterval, "r", 10*time.Second, "REPORT_INTERVAL")
+	flag.DurationVar(&worker.PoolInterval, "p", 2*time.Second, "POLL_INTERVAL")
 
 }
 
