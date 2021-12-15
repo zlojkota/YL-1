@@ -41,7 +41,7 @@ func main() {
 
 	var t collector.Collector
 	var agent agentcollector.Agent
-	flag.Parse()
+
 	err := env.Parse(&worker)
 	if err != nil {
 		log.Fatal(err)
@@ -56,6 +56,7 @@ func main() {
 	if *worker.PoolInterval == 2*time.Second {
 		worker.PoolInterval = flag.Duration("p", 2*time.Second, "POLL_INTERVAL")
 	}
+	flag.Parse()
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	t.Handle(*worker.PoolInterval, &agent)

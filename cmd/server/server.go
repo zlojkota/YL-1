@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"github.com/caarlos0/env/v6"
 	"github.com/labstack/echo/v4"
@@ -89,6 +90,13 @@ func main() {
 	go func() {
 		<-sigChan
 		log.Error("Stopping")
+		file, err := os.Create(*cfg.StoreFile)
+		if err != nil {
+			log.Error(err)
+		}
+		encoder := json.NewEncoder(file)
+		encoder.Encode(helper.ServerHandler.MetricMap)
+		file.Close()
 		helper.Done <- true
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
