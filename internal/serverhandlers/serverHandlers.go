@@ -77,7 +77,11 @@ func (h *ServerHandler) GetJSONHandler(c echo.Context) error {
 	if err != nil {
 		return c.NoContent(http.StatusNotImplemented)
 	}
-	return c.JSON(http.StatusOK, h.MetricMap[data.ID])
+	if val, ok := h.MetricMap[data.ID]; ok {
+		return c.JSON(http.StatusOK, val)
+	} else {
+		return c.NoContent(http.StatusNotFound)
+	}
 }
 
 func (h *ServerHandler) UpdateHandler(c echo.Context) error {
@@ -131,7 +135,15 @@ func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
 		switch data.MType {
 		case counter:
 			updateValue := h.MetricMap[data.ID]
-			*updateValue.Delta += *data.Delta
+			if updateValue == nil {
+				updateValue = &Metrics{
+					ID:    c.Param("metric"),
+					MType: counter,
+					Delta: data.Delta,
+				}
+			} else {
+				*updateValue.Delta += *data.Delta
+			}
 			h.MetricMap[data.ID] = updateValue
 			return c.NoContent(http.StatusOK)
 		case gauge:

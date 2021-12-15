@@ -90,31 +90,28 @@ func TestAllapp(t *testing.T) {
 
 		for loop {
 			<-tick.C
-			newMapGauge := worker.h.MetricMapGauge
-			newMapCounter := worker.h.MetricMapCounter
-
 			if iter == 0 {
 				col.Done <- true
 				loop = false
 			} else if iter != 20 {
-				for key, val := range newMapCounter {
-					oldVal, ok := oldMapCounter[key]
-					if val != oldVal && ok {
-						updatedCounter = true
+				for key, val := range worker.h.MetricMap {
+					switch val.MType {
+					case "gauge":
+						if oldVal, ok := oldMapGauge[key]; ok {
+							if oldVal != *val.Value {
+								updatedGauge = true
+							}
+						}
+						oldMapGauge[key] = *val.Value
+					case "counter":
+						if oldVal, ok := oldMapCounter[key]; ok {
+							if oldVal != *val.Delta {
+								updatedCounter = true
+							}
+						}
+						oldMapCounter[key] = *val.Delta
 					}
 				}
-				for key, val := range newMapGauge {
-					oldVal, ok := oldMapGauge[key]
-					if val != oldVal && ok {
-						updatedGauge = true
-					}
-				}
-			}
-			for key, val := range newMapCounter {
-				oldMapCounter[key] = val
-			}
-			for key, val := range newMapGauge {
-				oldMapGauge[key] = val
 			}
 			iter--
 		}
@@ -138,31 +135,28 @@ func TestAllapp(t *testing.T) {
 		loop := true
 		for loop {
 			<-tick.C
-			newMapGauge := worker.h.MetricMapGauge
-			newMapCounter := worker.h.MetricMapCounter
-
 			if iter == 0 {
+				col.Done <- true
 				loop = false
 			} else if iter != 20 {
-				for key, val := range newMapCounter {
-					oldVal, ok := oldMapCounter[key]
-					if val != oldVal && ok {
-						updatedCounter = true
+				for key, val := range worker.h.MetricMap {
+					switch val.MType {
+					case "gauge":
+						if oldVal, ok := oldMapGauge[key]; ok {
+							if oldVal != *val.Value {
+								updatedGauge = true
+							}
+						}
+						oldMapGauge[key] = *val.Value
+					case "counter":
+						if oldVal, ok := oldMapCounter[key]; ok {
+							if oldVal != *val.Delta {
+								updatedCounter = true
+							}
+						}
+						oldMapCounter[key] = *val.Delta
 					}
 				}
-				for key, val := range newMapGauge {
-					oldVal, ok := oldMapGauge[key]
-					if val != oldVal && ok {
-						updatedGauge = true
-					}
-				}
-
-			}
-			for key, val := range newMapCounter {
-				oldMapCounter[key] = val
-			}
-			for key, val := range newMapGauge {
-				oldMapGauge[key] = val
 			}
 			iter--
 		}
