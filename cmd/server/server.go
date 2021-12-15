@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -39,43 +38,27 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("SSSSSSSSSSSSSSSSSSSSSSSS________ENV:")
-	qwe, _ := json.Marshal(cfg)
-	fmt.Println(string(qwe))
-
 	if _, ok := os.LookupEnv("ADDRESS"); !ok {
-		fmt.Println("ADDRESS not in ENV")
 		cfg.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	} else {
-		fmt.Println("ADDRESS IN ENV")
 		_ = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	}
 	if _, ok := os.LookupEnv("STORE_FILE"); !ok {
-		fmt.Println("STORE_FILE not in ENV")
 		cfg.StoreFile = flag.String("f", "/tmp/devops-metrics-db.json", "STORE_FILE")
 	} else {
-		fmt.Println("STORE_FILE IN ENV")
 		_ = flag.String("f", "/tmp/devops-metrics-db.json", "STORE_FILE")
 	}
 	if _, ok := os.LookupEnv("RESTORE"); !ok {
-		fmt.Println("RESTORE not in ENV")
 		cfg.Restore = flag.Bool("r", true, "RESTORE")
 	} else {
-		fmt.Println("RESTORE IN ENV")
 		_ = flag.Bool("r", true, "RESTORE")
 	}
 	if _, ok := os.LookupEnv("STORE_INTERVAL"); !ok {
-		fmt.Println("STORE_INTERVAL not in ENV")
 		cfg.StoreInterval = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
 	} else {
-		fmt.Println("STORE_INTERVAL IN ENV")
 		_ = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
 	}
 	flag.Parse()
-
-	fmt.Println("SSSSSSSSSSSSSSSSSSSSSSSS________CMD:")
-	ewq, _ := json.Marshal(cfg)
-	fmt.Println(string(ewq))
 
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
@@ -121,7 +104,7 @@ func main() {
 		}
 		encoder := json.NewEncoder(file)
 		encoder.Encode(helper.ServerHandler.MetricMap)
-		file.Close()
+		defer file.Close()
 		helper.Done <- true
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

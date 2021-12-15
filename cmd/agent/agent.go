@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -49,36 +47,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________ENV:")
-	qwe, _ := json.Marshal(worker)
-	fmt.Println(string(qwe))
-
 	if _, ok := os.LookupEnv("ADDRESS"); !ok {
-		fmt.Println("ADDRESS not in ENV")
 		worker.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	} else {
-		fmt.Println("ADDRESS IN ENV")
 		_ = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	}
 	if _, ok := os.LookupEnv("REPORT_INTERVAL"); !ok {
-		fmt.Println("REPORT_INTERVAL not in ENV")
 		worker.ReportInterval = flag.Duration("r", 10*time.Second, "REPORT_INTERVAL")
 	} else {
-		fmt.Println("REPORT_INTERVAL IN ENV")
 		_ = flag.Duration("r", 10*time.Second, "REPORT_INTERVAL")
 	}
 	if _, ok := os.LookupEnv("POLL_INTERVAL"); !ok {
-		fmt.Println("POLL_INTERVAL not in ENV")
 		worker.PoolInterval = flag.Duration("p", 2*time.Second, "POLL_INTERVAL")
 	} else {
-		fmt.Println("POLL_INTERVAL IN ENV")
 		_ = flag.Duration("p", 2*time.Second, "POLL_INTERVAL")
 	}
 	flag.Parse()
-
-	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________CMD:")
-	ewq, _ := json.Marshal(worker)
-	fmt.Println(string(ewq))
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	t.Handle(*worker.PoolInterval, &agent)
