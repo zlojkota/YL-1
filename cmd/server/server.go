@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -38,6 +39,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	fmt.Println("SSSSSSSSSSSSSSSSSSSSSSSS________ENV:")
+	fmt.Println(cfg)
+
 	if *cfg.ServerAddr == "127.0.0.1:8080" {
 		cfg.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	}
@@ -51,6 +55,9 @@ func main() {
 		cfg.StoreInterval = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
 	}
 	flag.Parse()
+
+	fmt.Println("SSSSSSSSSSSSSSSSSSSSSSSS________CMD:")
+	fmt.Println(cfg)
 
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -47,6 +48,9 @@ func main() {
 		log.Fatal(err)
 	}
 
+	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________ENV:")
+	fmt.Println(worker)
+
 	if *worker.ServerAddr == "127.0.0.1:8080" {
 		worker.ServerAddr = flag.String("a", "127.0.0.1:8080", "ADDRESS")
 	}
@@ -57,6 +61,9 @@ func main() {
 		worker.PoolInterval = flag.Duration("p", 2*time.Second, "POLL_INTERVAL")
 	}
 	flag.Parse()
+
+	fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAA________CMD:")
+	fmt.Println(worker)
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	t.Handle(*worker.PoolInterval, &agent)
