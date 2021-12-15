@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"github.com/caarlos0/env/v6"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -17,14 +18,27 @@ import (
 
 type Config struct {
 	ServerAddr    string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"3s"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
 	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
 	Restore       bool          `env:"RESTORE" envDefault:"true"`
 }
 
+var cfg Config
+
+func init() {
+
+	flag.StringVar(&cfg.ServerAddr, "a", "127.0.0.1:8080", "ADDRESS")
+	flag.StringVar(&cfg.StoreFile, "f", "/tmp/devops-metrics-db.json", "STORE_FILE")
+	flag.BoolVar(&cfg.Restore, "r", true, "RESTORE")
+	flag.DurationVar(&cfg.StoreInterval, "i", 300*time.Second, "STORE_INTERVAL")
+
+}
+
 func main() {
 	// Setup
-	var cfg Config
+
+	flag.Parse()
+
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,6 +20,8 @@ type Worker struct {
 	PoolInterval   time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
 }
 
+var worker Worker
+
 func (p *Worker) RequestServe(req *http.Request) {
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -30,11 +33,19 @@ func (p *Worker) RequestServe(req *http.Request) {
 	log.Print(req.URL.Path)
 }
 
+func init() {
+
+	flag.StringVar(&worker.ServerAddr, "a", "127.0.0.1:8080", "ADDRESS")
+	flag.DurationVar(&worker.ReportInterval, "i", 10*time.Second, "REPORT_INTERVAL")
+	flag.DurationVar(&worker.PoolInterval, "i", 2*time.Second, "POLL_INTERVAL")
+
+}
+
 func main() {
 
 	var t collector.Collector
 	var agent agentcollector.Agent
-	var worker Worker
+	flag.Parse()
 	err := env.Parse(&worker)
 	if err != nil {
 		log.Fatal(err)
