@@ -11,9 +11,13 @@ import (
 	"github.com/zlojkota/YL-1/internal/collector"
 )
 
-const serverAddr = "http://localhost:8080"
+const srvAddr = "http://localhost:8080"
 const counter = "counter"
 const gauge = "gauge"
+
+type AgentCollectorInterface interface {
+	RequestServe(req *http.Request)
+}
 
 type AgentCollector interface {
 	RequestServe(req *http.Request)
@@ -22,10 +26,18 @@ type AgentCollector interface {
 type Agent struct {
 	sendJSON       bool
 	agentCollector AgentCollector
+	serverAddr     string
 }
 
-func (p *Agent) InitAgent(agentCollector AgentCollector) {
+func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr string) {
 	p.agentCollector = agentCollector
+	if len(serverAddr) == 0 {
+		p.serverAddr = srvAddr
+	} else {
+		p.serverAddr = fmt.Sprintf("http://%s", serverAddr)
+
+	}
+
 }
 
 func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
@@ -41,7 +53,7 @@ func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
 				log.Error(errEnc)
 				return
 			}
-			url := fmt.Sprintf("%s/update/", serverAddr)
+			url := fmt.Sprintf("%s/update/", p.serverAddr)
 			body := bytes.NewReader(jsonData)
 			res, err := http.NewRequest(http.MethodPost, url, body)
 			if err != nil {
@@ -61,7 +73,7 @@ func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
 			case gauge:
 				strVal = strconv.FormatFloat(*val.Value, 'f', -1, 64)
 			}
-			url := fmt.Sprintf("%s/update/%s/%s/%s", serverAddr, val.MType, val.ID, strVal)
+			url := fmt.Sprintf("%s/update/%s/%s/%s", p.serverAddr, val.MType, val.ID, strVal)
 			res, err := http.NewRequest(http.MethodPost, url, nil)
 			if err != nil {
 				log.Error(err)
