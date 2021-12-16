@@ -1,8 +1,8 @@
 package hashhelper
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"sync"
@@ -23,12 +23,10 @@ func (hsh *Hasher) hash(src string) string {
 	if hsh.key == "" {
 		return ""
 	}
-	hash := sha256.Sum256([]byte(src))
-	//return base64.StdEncoding.EncodeToString(hash[:])
-
-	dst := make([]byte, hex.EncodedLen(len(hash)))
-	hex.Encode(dst, hash[:])
-	return string(dst)
+	h := hmac.New(sha256.New, []byte(hsh.key))
+	h.Write([]byte(src))
+	sign := h.Sum(nil)
+	return string(sign)
 }
 
 func (hsh *Hasher) Hash(src *collector.Metrics) string {
