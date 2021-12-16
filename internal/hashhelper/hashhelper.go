@@ -24,10 +24,7 @@ func (hsh *Hasher) hash(src string) string {
 	if hsh.key == "" {
 		return ""
 	}
-	secretHash := sha256.New()
-	secretHash.Write([]byte(hsh.key))
-	key := secretHash.Sum(nil)
-	h := hmac.New(sha256.New, key)
+	h := hmac.New(sha256.New, []byte(hsh.key))
 	h.Write([]byte(src))
 	sign := h.Sum(nil)
 	dst := make([]byte, hex.EncodedLen(len(sign)))
