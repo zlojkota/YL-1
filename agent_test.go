@@ -68,7 +68,7 @@ func TestAllapp(t *testing.T) {
 	var agent agentcollector.Agent
 	var worker Worker
 	worker.InitWorker(t)
-	agent.InitAgent(&worker)
+	agent.InitAgent(&worker, "")
 	col.Handle(2*time.Millisecond, &agent)
 	go func() {
 		col.Run()

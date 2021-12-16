@@ -26,10 +26,6 @@ type Config struct {
 
 var cfg Config
 
-func init() {
-
-}
-
 func main() {
 	// Setup
 

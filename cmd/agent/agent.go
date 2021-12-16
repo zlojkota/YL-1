@@ -33,10 +33,6 @@ func (p *Worker) RequestServe(req *http.Request) {
 	log.Print(req.URL.Path)
 }
 
-func init() {
-
-}
-
 func main() {
 
 	var t collector.Collector

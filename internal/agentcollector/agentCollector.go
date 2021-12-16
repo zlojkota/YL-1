@@ -29,16 +29,13 @@ type Agent struct {
 	serverAddr     string
 }
 
-func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr ...string) {
+func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr string) {
 	p.agentCollector = agentCollector
 	if len(serverAddr) == 0 {
 		p.serverAddr = "http://localhost:8080"
 	} else {
-		if serverAddr[0] == "" {
-			p.serverAddr = "http://localhost:8080"
-		} else {
-			p.serverAddr = fmt.Sprintf("http://%s", serverAddr[0])
-		}
+		p.serverAddr = fmt.Sprintf("http://%s", serverAddr)
+
 	}
 
 }
