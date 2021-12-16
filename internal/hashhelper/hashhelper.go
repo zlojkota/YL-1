@@ -3,6 +3,7 @@ package hashhelper
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"sync"
@@ -26,7 +27,9 @@ func (hsh *Hasher) hash(src string) string {
 	h := hmac.New(sha256.New, []byte(hsh.key))
 	h.Write([]byte(src))
 	sign := h.Sum(nil)
-	return string(sign)
+	dst := make([]byte, hex.EncodedLen(len(sign)))
+	hex.Encode(dst, sign)
+	return string(dst)
 }
 
 func (hsh *Hasher) Hash(src *collector.Metrics) string {
