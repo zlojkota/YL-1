@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"net/http"
 	"os"
@@ -23,7 +22,6 @@ type Worker struct {
 }
 
 func (p *Worker) RequestServe(req *http.Request) {
-
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
@@ -67,8 +65,8 @@ func main() {
 	}
 	flag.Parse()
 
-	a, _ := json.Marshal(worker)
-	log.Error(string(a))
+	agent.InitAgent(&worker, *worker.ServerAddr)
+	agent.SetHasher(*worker.HashKey)
 
 	t.Handle(*worker.PoolInterval, &agent)
 
