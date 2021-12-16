@@ -29,7 +29,7 @@ func (p *Worker) RequestServe(req *http.Request) {
 		// Assertions
 		val := req.Header.Get("Content-Type")
 		if val == "application/json" {
-			if assert.NoError(p.t, p.h.UpdateJSONHandler(c)) {
+			if assert.NoError(p.t, p.h.UpdateHandler(c)) {
 				assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Post update application/json")
 			}
 		} else {
@@ -51,14 +51,14 @@ func (p *Worker) InitWorker(t *testing.T) {
 
 	// update Handler
 	p.e.POST("/update/:type/:metric/:value", p.h.UpdateHandler)
-	p.e.POST("/update/", p.h.UpdateJSONHandler)
+	p.e.POST("/update/", p.h.UpdateHandler)
 
 	// homePage Handler
 	p.e.GET("/", p.h.MainHandler)
 
 	// getValue Handler
 	p.e.GET("/value/:type/:metric", p.h.GetHandler)
-	p.e.POST("/value/", p.h.GetJSONHandler)
+	p.e.POST("/value/", p.h.GetHandler)
 
 }
 
@@ -92,7 +92,8 @@ func TestAllapp(t *testing.T) {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
 			newMapCounter := make(map[string]int64)
-			for _, val := range worker.h.MetricMap {
+			mm := worker.h.MetricMap()
+			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
 					newMapGauge[val.ID] = *val.Value
@@ -147,7 +148,8 @@ func TestAllapp(t *testing.T) {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
 			newMapCounter := make(map[string]int64)
-			for _, val := range worker.h.MetricMap {
+			mm := worker.h.MetricMap()
+			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
 					newMapGauge[val.ID] = *val.Value

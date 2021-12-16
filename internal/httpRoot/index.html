@@ -5,41 +5,25 @@
     <title>Main Page</title>
 </head>
 <body>
-<h1>GAUGES:</h1>
+<h1>METRICS:</h1>
 <table style="width:100%">
     <thead>
     <tr>
-        <th scope="col">Metric name</th>
+        <th scope="col">Metric Name</th>
+        <th scope="col">Metric Type</th>
         <th scope="col">Value</th>
+        <th scope="col">Hash</th>
         <th scope="col">Hyperlinc</th>
     </tr>
     </thead>
     <tbody>
-    {{range $index, $element := .MetricMap}}
+    {{range $index, $element := .}}
     <tr>
         <td>{{$index}}</td>
+        <td>{{$element.MType}}</td>
         <td>{{$element.Value}}</td>
+        <td>{{$element.Hash}}</td>
         <td><a href="http://localhost:8080/value/gauge/{{$index}}">http://localhost:8080/value/gauge/{{$index}}</a></td>
-    </tr>
-    {{end}}
-    </tbody>
-</table>
-
-<h1>COUNTERS:</h1>
-<table style="width:100%">
-    <thead>
-    <tr>
-        <th scope="col">Metric name</th>
-        <th scope="col">Value</th>
-        <th scope="col">Hyperlinc</th>
-    </tr>
-    </thead>
-    <tbody>
-    {{range $index, $element := .MetricMap}}
-    <tr>
-        <td>{{$index}}</td>
-        <td>{{$element.Delta}}</td>
-        <td><a href="http://localhost:8080/value/counter/{{$index}}">http://localhost:8080/value/counter/{{$index}}</a></td>
     </tr>
     {{end}}
     </tbody>

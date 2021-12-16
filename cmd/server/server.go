@@ -76,14 +76,14 @@ func main() {
 
 	// update Handler
 	e.POST("/update/:type/:metric/:value", handler.UpdateHandler)
-	e.POST("/update/", handler.UpdateJSONHandler)
+	e.POST("/update/", handler.UpdateHandler)
 
 	// homePage Handler
 	e.GET("/", handler.MainHandler)
 
 	// getValue Handler
 	e.GET("/value/:type/:metric", handler.GetHandler)
-	e.POST("/value/", handler.GetJSONHandler)
+	e.POST("/value/", handler.GetHandler)
 
 	var helper serverhelpers.StorageState
 	helper.SetServerHandler(handler)
@@ -106,7 +106,7 @@ func main() {
 			log.Error(err)
 		}
 		encoder := json.NewEncoder(file)
-		encoder.Encode(helper.ServerHandler.MetricMap)
+		encoder.Encode(helper.ServerHandler.MetricMap())
 		defer file.Close()
 		helper.Done <- true
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -3,15 +3,11 @@ package serverhelpers
 import (
 	"encoding/json"
 	"github.com/labstack/gommon/log"
+	"github.com/zlojkota/YL-1/internal/collector"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"os"
 	"time"
 )
-
-type InterfaceStorageState interface {
-	GetterMetrics() map[string]*serverhandlers.Metrics
-	SetterMetrics(map[string]*serverhandlers.Metrics)
-}
 
 type StorageState struct {
 	ServerHandler *serverhandlers.ServerHandler
@@ -29,10 +25,10 @@ func (ssh *StorageState) Restore(storeFile string) {
 		log.Error(err)
 	}
 	decoder := json.NewDecoder(file)
-	mm := make(map[string]*serverhandlers.Metrics)
+	mm := make(map[string]*collector.Metrics)
 	decoder.Decode(&mm)
-	ssh.ServerHandler.MetricMap = mm
-	file.Close()
+	ssh.ServerHandler.SetMetricMap(mm)
+	defer file.Close()
 }
 
 func (ssh *StorageState) Run(storeInterval time.Duration, storeFile string) {
@@ -48,8 +44,8 @@ func (ssh *StorageState) Run(storeInterval time.Duration, storeFile string) {
 				log.Error(err)
 			}
 			encoder := json.NewEncoder(file)
-			encoder.Encode(&ssh.ServerHandler.MetricMap)
-			file.Close()
+			encoder.Encode(ssh.ServerHandler.MetricMap())
+			defer file.Close()
 		}
 	}
 
