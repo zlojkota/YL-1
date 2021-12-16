@@ -2,7 +2,7 @@ package hashhelper
 
 import (
 	"crypto/hmac"
-	"crypto/md5"
+	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -25,7 +25,7 @@ func (hsh *Hasher) hash(src string) string {
 	if hsh.key == "" {
 		return ""
 	}
-	secretHash := md5.New()
+	secretHash := sha1.New()
 	secretHash.Write([]byte(hsh.key))
 	key := secretHash.Sum(nil)
 	h := hmac.New(sha256.New, key)
