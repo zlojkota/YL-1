@@ -2,7 +2,7 @@ package hashhelper
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"sync"
@@ -24,7 +24,10 @@ func (hsh *Hasher) hash(src string) string {
 		return ""
 	}
 	hash := sha256.Sum256([]byte(src))
-	return base64.StdEncoding.EncodeToString(hash[:])
+	//return base64.StdEncoding.EncodeToString(hash[:])
+	var hashEncoded []byte
+	hex.Encode(hashEncoded, hash[:])
+	return string(hashEncoded)
 }
 
 func (hsh *Hasher) Hash(src *collector.Metrics) string {
