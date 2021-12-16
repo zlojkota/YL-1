@@ -13,7 +13,7 @@ import (
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 )
 
-const iterations = 200
+const iterations = 20
 
 type Worker struct {
 	t *testing.T
@@ -95,6 +95,7 @@ func TestAllapp(t *testing.T) {
 			newMapGauge := make(map[string]float64)
 			newMapCounter := make(map[string]int64)
 			mm := worker.h.MetricMap()
+			worker.h.MetricMapMuxLock()
 			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
@@ -103,6 +104,7 @@ func TestAllapp(t *testing.T) {
 					newMapCounter[val.ID] = *val.Delta
 				}
 			}
+			worker.h.MetricMapMuxUnlock()
 			if iter == 0 {
 				col.Done <- true
 				loop = false

@@ -21,6 +21,13 @@ type ServerHandler struct {
 	hasher       hashhelper.Hasher
 }
 
+func (h *ServerHandler) MetricMapMuxLock() {
+	h.metricMapMux.Lock()
+}
+func (h *ServerHandler) MetricMapMuxUnlock() {
+	h.metricMapMux.Unlock()
+}
+
 func (h *ServerHandler) SetHasher(key string) {
 	h.hasher.SetKey(key)
 }
