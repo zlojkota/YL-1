@@ -2,6 +2,7 @@ package serverhandlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/labstack/gommon/log"
 	"html/template"
 	"net/http"
@@ -17,6 +18,13 @@ type ServerHandler struct {
 
 const counter = "counter"
 const gauge = "gauge"
+
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
 
 func NewServerHandler() *ServerHandler {
 	p := new(ServerHandler)
@@ -37,7 +45,11 @@ func (h *ServerHandler) MainHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal ERROR")
 	}
 	var buf bytes.Buffer
-	t.Execute(&buf, *h)
+	err = t.Execute(&buf, *h)
+	if err != nil {
+		log.Error(err)
+		return c.String(http.StatusInternalServerError, "Internal ERROR")
+	}
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
 	return c.String(http.StatusOK, buf.String())
 }
@@ -61,9 +73,28 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 	}
 }
 
+func (h *ServerHandler) GetJSONHandler(c echo.Context) error {
+	var data Metrics
+	err := json.NewDecoder(c.Request().Body).Decode(&data)
+	if err != nil {
+		return c.NoContent(http.StatusNotImplemented)
+	}
+	switch data.MType {
+	case counter:
+		delta := h.MetricMapCounter[data.ID]
+		data.Delta = &delta
+	case gauge:
+		value := h.MetricMapGauge[data.ID]
+		data.Value = &value
+	default:
+		return c.NoContent(http.StatusNotImplemented)
+	}
+	return c.JSON(http.StatusOK, data)
+}
+
 func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 
-	switch typeM := c.Param("type"); typeM {
+	switch c.Param("type") {
 	case counter:
 		val, err := strconv.ParseInt(c.Param("value"), 0, 64)
 		if err != nil {
@@ -81,4 +112,25 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
+}
+
+func (h *ServerHandler) UpdateJSONHandler(c echo.Context) error {
+	if c.Request().Header.Get("Content-Type") == "application/json" {
+		var data Metrics
+		err := json.NewDecoder(c.Request().Body).Decode(&data)
+		if err != nil {
+			return c.NoContent(http.StatusNotImplemented)
+		}
+		switch data.MType {
+		case counter:
+			h.MetricMapCounter[data.ID] += *data.Delta
+			return c.NoContent(http.StatusOK)
+		case gauge:
+			h.MetricMapGauge[data.ID] = *data.Value
+			return c.NoContent(http.StatusOK)
+		default:
+			return c.NoContent(http.StatusNotImplemented)
+		}
+	}
+	return c.NoContent(http.StatusNotFound)
 }
