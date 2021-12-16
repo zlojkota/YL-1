@@ -58,7 +58,7 @@ func main() {
 	if _, ok := os.LookupEnv("KEY"); !ok {
 		cfg.HashKey = flag.String("k", "", "KEY")
 	} else {
-		_ = flag.String("k", "", "POLL_INTERVAL")
+		_ = flag.String("k", "", "KEY")
 	}
 	flag.Parse()
 

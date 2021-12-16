@@ -61,7 +61,7 @@ func main() {
 	if _, ok := os.LookupEnv("KEY"); !ok {
 		worker.HashKey = flag.String("k", "", "KEY")
 	} else {
-		_ = flag.String("k", "", "POLL_INTERVAL")
+		_ = flag.String("k", "", "k")
 	}
 	flag.Parse()
 

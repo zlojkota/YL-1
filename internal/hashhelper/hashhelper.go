@@ -41,6 +41,14 @@ func (hsh *Hasher) Hash(src *collector.Metrics) string {
 	}
 }
 
+func (hsh *Hasher) HashG(id string, val float64) string {
+	return hsh.hash(fmt.Sprintf("%s:gauge:%f", id, val))
+}
+
+func (hsh *Hasher) HashC(id string, val int64) string {
+	return hsh.hash(fmt.Sprintf("%s:counter:%d", id, val))
+}
+
 func (hsh *Hasher) TestHash(src *collector.Metrics) bool {
 	if hsh.Hash(src) == src.Hash {
 		return true

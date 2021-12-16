@@ -140,12 +140,14 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 				return c.NoContent(http.StatusBadRequest)
 			}
 			updateValue.Delta = &val
+			updateValue.Hash = h.hasher.HashC(updateValue.ID, val)
 		case gauge:
 			val, err := strconv.ParseFloat(c.Param("value"), 64)
 			if err != nil {
 				return c.NoContent(http.StatusBadRequest)
 			}
 			updateValue.Value = &val
+			updateValue.Hash = h.hasher.HashG(updateValue.ID, val)
 		default:
 			return c.NoContent(http.StatusNotImplemented)
 		}
