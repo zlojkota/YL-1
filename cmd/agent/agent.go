@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"net/http"
 	"os"
@@ -64,6 +65,9 @@ func main() {
 		_ = flag.String("k", "", "POLL_INTERVAL")
 	}
 	flag.Parse()
+
+	a, _ := json.Marshal(worker)
+	log.Error(string(a))
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	agent.SetHasher(*worker.HashKey)
