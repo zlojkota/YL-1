@@ -7,14 +7,19 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
+	"github.com/zlojkota/YL-1/internal/serverhelpers"
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 )
 
 type Config struct {
-	ServerAddr string `env:"ADDRESS"`
+	ServerAddr    string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
+	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"3s"`
+	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
+	Restore       bool          `env:"RESTORE" envDefault:"true"`
 }
 
 func main() {
@@ -24,9 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if cfg.ServerAddr == "" {
-		cfg.ServerAddr = "127.0.0.1:8080"
-	}
+
 	e := echo.New()
 	e.Logger.SetLevel(log.DEBUG)
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
@@ -49,21 +52,36 @@ func main() {
 	e.GET("/value/:type/:metric", handler.GetHandler)
 	e.POST("/value/", handler.GetJSONHandler)
 
-	// Start server
+	var helper serverhelpers.StorageState
+	helper.SetServerHandler(handler)
+
+	if cfg.Restore {
+		helper.Restore(cfg.StoreFile)
+	}
+
 	go func() {
-		if err := e.Start(cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal("shutting down the server")
+		helper.Run(cfg.StoreInterval, cfg.StoreFile)
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	go func() {
+		<-sigChan
+		log.Error("Stopping")
+		helper.Done <- true
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := e.Shutdown(ctx); err != nil {
+			e.Logger.Fatal(err)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
-	// Use a buffered channel to avoid missing signals as recommended for signal.Notify
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+	if err := e.Start(cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
+		e.Logger.Fatal("shutting down the server")
 	}
+
 }

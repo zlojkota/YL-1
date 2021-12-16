@@ -90,9 +90,16 @@ func TestAllapp(t *testing.T) {
 
 		for loop {
 			<-tick.C
-			newMapGauge := worker.h.MetricMapGauge
-			newMapCounter := worker.h.MetricMapCounter
-
+			newMapGauge := make(map[string]float64)
+			newMapCounter := make(map[string]int64)
+			for _, val := range worker.h.MetricMap {
+				switch val.MType {
+				case "gauge":
+					newMapGauge[val.ID] = *val.Value
+				case "counter":
+					newMapCounter[val.ID] = *val.Delta
+				}
+			}
 			if iter == 0 {
 				col.Done <- true
 				loop = false
@@ -138,8 +145,16 @@ func TestAllapp(t *testing.T) {
 		loop := true
 		for loop {
 			<-tick.C
-			newMapGauge := worker.h.MetricMapGauge
-			newMapCounter := worker.h.MetricMapCounter
+			newMapGauge := make(map[string]float64)
+			newMapCounter := make(map[string]int64)
+			for _, val := range worker.h.MetricMap {
+				switch val.MType {
+				case "gauge":
+					newMapGauge[val.ID] = *val.Value
+				case "counter":
+					newMapCounter[val.ID] = *val.Delta
+				}
+			}
 
 			if iter == 0 {
 				loop = false
