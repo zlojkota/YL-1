@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,6 +24,20 @@ type Worker struct {
 }
 
 func (p *Worker) RequestServe(req *http.Request) {
+
+	var buf []byte
+	if req.Body != nil {
+		buff, bodyErr := ioutil.ReadAll(req.Body)
+		if bodyErr != nil {
+			log.Print("bodyErr ", bodyErr.Error())
+			return
+		}
+		buf = buff
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+	} else {
+		buf = []byte("nil")
+	}
+	log.Print("URL:", req.URL.Path, ", Body:", string(buf))
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
@@ -29,7 +45,7 @@ func (p *Worker) RequestServe(req *http.Request) {
 		return
 	}
 	defer res.Body.Close()
-	log.Print(req.URL.Path)
+
 }
 
 func main() {
