@@ -2,7 +2,7 @@ package hashhelper
 
 import (
 	"crypto/hmac"
-	"crypto/sha1"
+	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
@@ -24,7 +24,7 @@ func (hsh *Hasher) hash(src string) string {
 	if hsh.key == "" {
 		return ""
 	}
-	h := hmac.New(sha1.New, []byte(hsh.key))
+	h := hmac.New(md5.New, []byte(hsh.key))
 	h.Write([]byte(src))
 	sign := h.Sum(nil)
 	dst := make([]byte, hex.EncodedLen(len(sign)))
