@@ -107,7 +107,16 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 
 	var updateValue collector.Metrics
-	switch c.Request().Header.Get("Content-Type") {
+	contentType := c.Request().Header.Get("Content-Type")
+	if contentType == "" &&
+		c.Param("metric") != "" &&
+		c.Param("value") != "" &&
+		c.Param("type") != "" {
+
+		contentType = "text/plain"
+	}
+
+	switch contentType {
 	case "text/plain":
 		updateValue.ID = c.Param("metric")
 		updateValue.MType = c.Param("type")

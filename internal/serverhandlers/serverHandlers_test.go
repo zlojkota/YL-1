@@ -257,7 +257,6 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 		t.Run(itc.name, func(t *testing.T) {
 			e := echo.New()
 			req := httptest.NewRequest(itc.reqMethod, itc.uri, nil)
-			req.Header.Set("Content-Type", "text/plain")
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			switch itc.reqMethod {
