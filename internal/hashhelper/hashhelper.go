@@ -25,9 +25,10 @@ func (hsh *Hasher) hash(src string) string {
 	}
 	hash := sha256.Sum256([]byte(src))
 	//return base64.StdEncoding.EncodeToString(hash[:])
-	var hashEncoded []byte
-	hex.Encode(hashEncoded, hash[:])
-	return string(hashEncoded)
+
+	dst := make([]byte, hex.EncodedLen(len(hash)))
+	hex.Encode(dst, hash[:])
+	return string(dst)
 }
 
 func (hsh *Hasher) Hash(src *collector.Metrics) string {
