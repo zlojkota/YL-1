@@ -37,12 +37,15 @@ func (p *Worker) RequestServe(req *http.Request) {
 	} else {
 		buf = []byte("nil")
 	}
-	log.Print("URL:", req.URL.Path, ", Body:", string(buf))
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
-		log.Error(err)
+		//log.Error(err)
 		return
+	} else {
+		if res.StatusCode == http.StatusBadRequest {
+			log.Print("URL:", req.URL.Path, ", Body:", string(buf))
+		}
 	}
 	defer res.Body.Close()
 
