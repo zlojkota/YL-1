@@ -11,7 +11,7 @@ import (
 	"github.com/zlojkota/YL-1/internal/collector"
 )
 
-//const serverAddr = "http://localhost:8080"
+const srvAddr = "http://localhost:8080"
 const counter = "counter"
 const gauge = "gauge"
 
@@ -32,7 +32,7 @@ type Agent struct {
 func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr string) {
 	p.agentCollector = agentCollector
 	if len(serverAddr) == 0 {
-		p.serverAddr = "http://localhost:8080"
+		p.serverAddr = srvAddr
 	} else {
 		p.serverAddr = fmt.Sprintf("http://%s", serverAddr)
 
