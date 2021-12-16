@@ -21,9 +21,10 @@ type Worker struct {
 	ReportInterval *time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
 	PoolInterval   *time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
 	HashKey        *string        `env:"KEY" envDefault:""`
+	client         *http.Client
 }
 
-func (p *Worker) RequestServe(req *http.Request) {
+func (p *Worker) RequestSend(req *http.Request) {
 
 	var buf []byte
 	if req.Body != nil {
@@ -37,15 +38,12 @@ func (p *Worker) RequestServe(req *http.Request) {
 	} else {
 		buf = []byte("nil")
 	}
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := p.client.Do(req)
 	if err != nil {
-		//log.Error(err)
+		log.Error(err)
 		return
 	} else {
-		if res.StatusCode == http.StatusBadRequest {
-			log.Print("URL:", req.URL.Path, ", Body:", string(buf))
-		}
+		log.Print("StatusCode:", res.StatusCode, " URL:", req.URL.Path, ", Body:", string(buf))
 	}
 	defer res.Body.Close()
 
@@ -55,7 +53,9 @@ func main() {
 
 	var t collector.Collector
 	var agent agentcollector.Agent
-	var worker Worker
+	worker := Worker{
+		client: &http.Client{},
+	}
 
 	err := env.Parse(&worker)
 	if err != nil {

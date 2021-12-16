@@ -17,9 +17,8 @@ const counter = "counter"
 const gauge = "gauge"
 
 type AgentCollector interface {
-	RequestServe(req *http.Request)
+	RequestSend(req *http.Request)
 }
-
 type Agent struct {
 	sendJSON       bool
 	agentCollector AgentCollector
@@ -45,56 +44,71 @@ func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr ...string) {
 
 }
 
-func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
+func (p *Agent) MakeRequestJSON(metrics collector.Metrics) (*http.Request, error) {
+	switch metrics.MType {
+	case counter:
+		metrics.Hash = p.hasher.Hash(&metrics)
+	case gauge:
+		metrics.Hash = p.hasher.Hash(&metrics)
+	}
+	jsonData, errEnc := json.Marshal(metrics)
+	if errEnc != nil {
+		return nil, errEnc
+	}
+	url := fmt.Sprintf("%s/update/", p.serverAddr)
+	body := bytes.NewReader(jsonData)
+	req, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = make(http.Header)
+	req.Header.Set("Content-Type", "application/json")
+	return req, nil
+}
+
+func (p *Agent) MakeRequestPLTX(metrics collector.Metrics) (*http.Request, error) {
+	var strVal string
+	switch metrics.MType {
+	case counter:
+		strVal = strconv.FormatInt(*metrics.Delta, 10)
+	case gauge:
+		strVal = strconv.FormatFloat(*metrics.Value, 'f', -1, 64)
+	}
+	url := fmt.Sprintf("%s/update/%s/%s/%s", p.serverAddr, metrics.MType, metrics.ID, strVal)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	path := fmt.Sprintf("/update/%s/%s/%s", metrics.MType, metrics.ID, strVal)
+	req.URL.Path = path
+	req.Header = make(http.Header)
+	req.Header.Set("Content-Type", "text/plain")
+	return req, nil
+}
+
+func (p *Agent) MakeRequest(metrics *[]collector.Metrics) {
 	if p.agentCollector == nil {
 		log.Error("No AgentCollector Init!")
 		return
 	}
-	p.sendJSON = !(p.sendJSON)
+	p.sendJSON = !p.sendJSON
 	if p.sendJSON {
 		for _, val := range *metrics {
-			switch val.MType {
-			case counter:
-				val.Hash = p.hasher.Hash(&val)
-			case gauge:
-				val.Hash = p.hasher.Hash(&val)
-			}
-			jsonData, errEnc := json.Marshal(val)
-			if errEnc != nil {
-				log.Error(errEnc)
-				return
-			}
-			url := fmt.Sprintf("%s/update/", p.serverAddr)
-			body := bytes.NewReader(jsonData)
-			res, err := http.NewRequest(http.MethodPost, url, body)
+			req, err := p.MakeRequestJSON(val)
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			res.Header = make(http.Header)
-			res.Header.Set("Content-Type", "application/json")
-			p.agentCollector.RequestServe(res)
+			p.agentCollector.RequestSend(req)
 		}
 	} else {
 		for _, val := range *metrics {
-			var strVal string
-			switch val.MType {
-			case counter:
-				strVal = strconv.FormatInt(*val.Delta, 10)
-			case gauge:
-				strVal = strconv.FormatFloat(*val.Value, 'f', -1, 64)
-			}
-			url := fmt.Sprintf("%s/update/%s/%s/%s", p.serverAddr, val.MType, val.ID, strVal)
-			res, err := http.NewRequest(http.MethodPost, url, nil)
+			req, err := p.MakeRequestPLTX(val)
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			path := fmt.Sprintf("/update/%s/%s/%s", val.MType, val.ID, strVal)
-			res.URL.Path = path
-			res.Header = make(http.Header)
-			res.Header.Set("Content-Type", "text/plain")
-			p.agentCollector.RequestServe(res)
+			p.agentCollector.RequestSend(req)
 		}
 	}
 }

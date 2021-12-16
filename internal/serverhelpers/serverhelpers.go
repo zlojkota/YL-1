@@ -14,12 +14,12 @@ type StorageState struct {
 	Done          chan bool
 }
 
-func (ssh *StorageState) SetServerHandler(serverHandler *serverhandlers.ServerHandler) {
-	ssh.ServerHandler = serverHandler
-	ssh.Done = make(chan bool)
+func (ss *StorageState) SetServerHandler(serverHandler *serverhandlers.ServerHandler) {
+	ss.ServerHandler = serverHandler
+	ss.Done = make(chan bool)
 }
 
-func (ssh *StorageState) Restore(storeFile string) {
+func (ss *StorageState) Restore(storeFile string) {
 	file, err := os.OpenFile(storeFile, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Error(err)
@@ -27,16 +27,16 @@ func (ssh *StorageState) Restore(storeFile string) {
 	decoder := json.NewDecoder(file)
 	mm := make(map[string]*collector.Metrics)
 	decoder.Decode(&mm)
-	ssh.ServerHandler.SetMetricMap(mm)
+	ss.ServerHandler.SetMetricMap(mm)
 	defer file.Close()
 }
 
-func (ssh *StorageState) Run(storeInterval time.Duration, storeFile string) {
+func (ss *StorageState) Run(storeInterval time.Duration, storeFile string) {
 	tick := time.NewTicker(storeInterval)
 	defer tick.Stop()
 	for {
 		select {
-		case <-ssh.Done:
+		case <-ss.Done:
 			return
 		case <-tick.C:
 			file, err := os.Create(storeFile)
@@ -44,7 +44,7 @@ func (ssh *StorageState) Run(storeInterval time.Duration, storeFile string) {
 				log.Error(err)
 			}
 			encoder := json.NewEncoder(file)
-			encoder.Encode(ssh.ServerHandler.MetricMap())
+			encoder.Encode(ss.ServerHandler.MetricMap())
 			defer file.Close()
 		}
 	}

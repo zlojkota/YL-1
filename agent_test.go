@@ -21,7 +21,7 @@ type Worker struct {
 	e *echo.Echo
 }
 
-func (p *Worker) RequestServe(req *http.Request) {
+func (p *Worker) RequestSend(req *http.Request) {
 
 	p.t.Run("Handling reqwest-response", func(t *testing.T) {
 		rec := httptest.NewRecorder()

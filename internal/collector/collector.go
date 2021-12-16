@@ -18,7 +18,7 @@ type Metrics struct {
 }
 
 type CollectorHandle interface {
-	SendMetrics(metrics *[]Metrics)
+	MakeRequest(metrics *[]Metrics)
 }
 
 type Collector struct {
@@ -104,7 +104,7 @@ func (col *Collector) Run() {
 			if col.handle == nil {
 				log.Println(col.Metrics)
 			} else {
-				col.handle.SendMetrics(&col.Metrics)
+				col.handle.MakeRequest(&col.Metrics)
 			}
 		}
 		col.counter++

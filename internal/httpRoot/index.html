@@ -21,7 +21,13 @@
     <tr>
         <td>{{$index}}</td>
         <td>{{$element.MType}}</td>
-        <td>{{$element.Value}}</td>
+        <td>
+            {{if $element.Value}}
+            {{$element.Value}}
+            {{else}}
+            {{$element.Delta}}
+            {{end}}
+        </td>
         <td>{{$element.Hash}}</td>
         <td><a href="http://localhost:8080/value/gauge/{{$index}}">http://localhost:8080/value/gauge/{{$index}}</a></td>
     </tr>
