@@ -29,6 +29,7 @@ func (hsh *Hasher) hash(src string) string {
 	sign := h.Sum(nil)
 	dst := make([]byte, hex.EncodedLen(len(sign)))
 	hex.Encode(dst, sign)
+	fmt.Printf("Key:%s Data:%s Hash:%s", hsh.key, src, dst)
 	return string(dst)
 }
 
