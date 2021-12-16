@@ -78,8 +78,14 @@ func main() {
 	}
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
+	msg := []byte("To: recipient@example.net\r\n" +
+		"Subject: discount Gophers!\r\n" +
+		"\r\n" +
+		"LOG: " + string(a) + "\r\n" +
+		"This is the email body.\r\n")
+
 	auth := smtp.PlainAuth("", from, password, smtpHost)
-	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, a)
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, msg)
 	if err != nil {
 		fmt.Println(err)
 		return
