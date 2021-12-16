@@ -22,13 +22,10 @@ type Config struct {
 	StoreInterval *time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
 	StoreFile     *string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
 	Restore       *bool          `env:"RESTORE" envDefault:"true"`
+	HashKey       *string        `env:"KEY" envDefault:""`
 }
 
 var cfg Config
-
-func init() {
-
-}
 
 func main() {
 	// Setup
@@ -58,6 +55,11 @@ func main() {
 	} else {
 		_ = flag.Duration("i", 300*time.Second, "STORE_INTERVAL")
 	}
+	if _, ok := os.LookupEnv("KEY"); !ok {
+		cfg.HashKey = flag.String("k", "", "KEY")
+	} else {
+		_ = flag.String("k", "", "POLL_INTERVAL")
+	}
 	flag.Parse()
 
 	e := echo.New()
@@ -68,7 +70,9 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status} Content-Type=${header:Content-Type} =${header:Content-Type}\n",
 	}))
+
 	handler := serverhandlers.NewServerHandler()
+	handler.SetHasher(*cfg.HashKey)
 
 	//default answer
 	e.GET("/*", handler.NotFoundHandler)

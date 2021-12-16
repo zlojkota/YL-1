@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/collector"
+	"github.com/zlojkota/YL-1/internal/hashhelper"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -17,6 +18,11 @@ type ServerHandler struct {
 	metricMap    map[string]*collector.Metrics
 	metricMapMux sync.Mutex
 	IndexPath    string
+	hasher       hashhelper.Hasher
+}
+
+func (h *ServerHandler) SetHasher(key string) {
+	h.hasher.SetKey(key)
 }
 
 func (h *ServerHandler) MetricMap() map[string]*collector.Metrics {
@@ -140,6 +146,9 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		err := json.NewDecoder(c.Request().Body).Decode(&updateValue)
 		if err != nil {
 			return c.NoContent(http.StatusNotImplemented)
+		}
+		if !h.hasher.TestHash(&updateValue) {
+			return c.NoContent(http.StatusBadRequest)
 		}
 	default:
 		return c.NoContent(http.StatusNotImplemented)

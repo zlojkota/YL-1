@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/zlojkota/YL-1/internal/hashhelper"
 	"net/http"
 	"strconv"
 
@@ -15,10 +16,6 @@ import (
 const counter = "counter"
 const gauge = "gauge"
 
-type AgentCollectorInterface interface {
-	RequestServe(req *http.Request)
-}
-
 type AgentCollector interface {
 	RequestServe(req *http.Request)
 }
@@ -27,6 +24,11 @@ type Agent struct {
 	sendJSON       bool
 	agentCollector AgentCollector
 	serverAddr     string
+	hasher         hashhelper.Hasher
+}
+
+func (p *Agent) SetHasher(key string) {
+	p.hasher.SetKey(key)
 }
 
 func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr ...string) {
@@ -51,6 +53,12 @@ func (p *Agent) SendMetrics(metrics *[]collector.Metrics) {
 	p.sendJSON = !(p.sendJSON)
 	if p.sendJSON {
 		for _, val := range *metrics {
+			switch val.MType {
+			case counter:
+				val.Hash = p.hasher.Hash(&val)
+			case gauge:
+				val.Hash = p.hasher.Hash(&val)
+			}
 			jsonData, errEnc := json.Marshal(val)
 			if errEnc != nil {
 				log.Error(errEnc)

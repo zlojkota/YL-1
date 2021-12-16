@@ -13,6 +13,8 @@ import (
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 )
 
+const iterations = 200
+
 type Worker struct {
 	t *testing.T
 	h *serverhandlers.ServerHandler
@@ -83,7 +85,7 @@ func TestAllapp(t *testing.T) {
 
 		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
-		iter := 20
+		iter := iterations
 		loop := true
 		updatedCounter := false
 		updatedGauge := false
@@ -104,7 +106,7 @@ func TestAllapp(t *testing.T) {
 			if iter == 0 {
 				col.Done <- true
 				loop = false
-			} else if iter != 20 {
+			} else if iter != iterations {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
@@ -142,7 +144,7 @@ func TestAllapp(t *testing.T) {
 
 		updatedCounter := false
 		updatedGauge := false
-		iter := 20
+		iter := iterations
 		loop := true
 		for loop {
 			<-tick.C
@@ -160,7 +162,7 @@ func TestAllapp(t *testing.T) {
 
 			if iter == 0 {
 				loop = false
-			} else if iter != 20 {
+			} else if iter != iterations {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {

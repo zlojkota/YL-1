@@ -18,9 +18,8 @@ type Worker struct {
 	ServerAddr     *string        `env:"ADDRESS" envDefault:"127.0.0.1:8080"`
 	ReportInterval *time.Duration `env:"REPORT_INTERVAL" envDefault:"10s"`
 	PoolInterval   *time.Duration `env:"POLL_INTERVAL" envDefault:"2s"`
+	HashKey        *string        `env:"KEY" envDefault:""`
 }
-
-var worker Worker
 
 func (p *Worker) RequestServe(req *http.Request) {
 	client := &http.Client{}
@@ -33,14 +32,11 @@ func (p *Worker) RequestServe(req *http.Request) {
 	log.Print(req.URL.Path)
 }
 
-func init() {
-
-}
-
 func main() {
 
 	var t collector.Collector
 	var agent agentcollector.Agent
+	var worker Worker
 
 	err := env.Parse(&worker)
 	if err != nil {
@@ -62,9 +58,16 @@ func main() {
 	} else {
 		_ = flag.Duration("p", 2*time.Second, "POLL_INTERVAL")
 	}
+	if _, ok := os.LookupEnv("KEY"); !ok {
+		worker.HashKey = flag.String("k", "", "KEY")
+	} else {
+		_ = flag.String("k", "", "POLL_INTERVAL")
+	}
 	flag.Parse()
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
+	agent.SetHasher(*worker.HashKey)
+
 	t.Handle(*worker.PoolInterval, &agent)
 
 	sigChan := make(chan os.Signal, 1)
