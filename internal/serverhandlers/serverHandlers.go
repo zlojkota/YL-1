@@ -174,7 +174,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			ID:    updateValue.ID,
 			MType: updateValue.MType,
 			Delta: &delta,
-			Hash:  updateValue.Hash,
+			Hash:  h.hasher.HashC(updateValue.ID, delta),
 		})
 		return c.NoContent(http.StatusOK)
 	case gauge:
