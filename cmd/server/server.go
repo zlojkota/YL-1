@@ -8,8 +8,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/zlojkota/YL-1/internal/filestorage"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
-	"github.com/zlojkota/YL-1/internal/serverhelpers"
 	"net/http"
 	"os"
 	"os/signal"
@@ -89,7 +89,7 @@ func main() {
 	e.GET("/value/:type/:metric", handler.GetHandler)
 	e.POST("/value/", handler.GetHandler)
 
-	var helper serverhelpers.StorageState
+	var helper filestorage.FileStorageState
 	helper.SetServerHandler(handler)
 
 	if *cfg.Restore {

@@ -1,4 +1,4 @@
-package serverhelpers
+package filestorage
 
 import (
 	"encoding/json"
@@ -9,17 +9,17 @@ import (
 	"time"
 )
 
-type StorageState struct {
+type FileStorageState struct {
 	ServerHandler *serverhandlers.ServerHandler
 	Done          chan bool
 }
 
-func (ss *StorageState) SetServerHandler(serverHandler *serverhandlers.ServerHandler) {
+func (ss *FileStorageState) SetServerHandler(serverHandler *serverhandlers.ServerHandler) {
 	ss.ServerHandler = serverHandler
 	ss.Done = make(chan bool)
 }
 
-func (ss *StorageState) Restore(storeFile string) {
+func (ss *FileStorageState) Restore(storeFile string) {
 	file, err := os.OpenFile(storeFile, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Error(err)
@@ -31,7 +31,7 @@ func (ss *StorageState) Restore(storeFile string) {
 	defer file.Close()
 }
 
-func (ss *StorageState) Run(storeInterval time.Duration, storeFile string) {
+func (ss *FileStorageState) Run(storeInterval time.Duration, storeFile string) {
 	tick := time.NewTicker(storeInterval)
 	defer tick.Stop()
 	for {
