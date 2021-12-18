@@ -93,7 +93,7 @@ func (ss DataBaseStorageState) SaveToStorage() {
 		if cnt == 0 {
 			ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
 		} else {
-			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4", val.Delta, val.Value, val.Hash, val.ID)
+			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
 		}
 		//fmt.Println("++++++", val.ID)
 	}
