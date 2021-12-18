@@ -84,7 +84,7 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 
 func (ss DataBaseStorageState) SaveToStorage() {
 
-	fmt.Println("----------------------------Start save to db-------------------------------------------")
+	//fmt.Println("----------------------------Start save to db-------------------------------------------")
 	mm := ss.ServerHandler.MetricMap()
 	for _, val := range mm {
 		var cnt int
@@ -94,8 +94,8 @@ func (ss DataBaseStorageState) SaveToStorage() {
 		} else {
 			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4", val.Delta, val.Value, val.Hash, val.ID)
 		}
-		fmt.Println("++++++", val.ID)
+		//fmt.Println("++++++", val.ID)
 	}
-	fmt.Println("============================Stop save to db============================================")
+	//fmt.Println("============================Stop save to db============================================")
 
 }

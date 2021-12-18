@@ -48,6 +48,7 @@ func (ss *FileStorageState) Restore() {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
+			log.Error(err)
 		}
 	}(file)
 }
@@ -70,6 +71,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 			defer func(file *os.File) {
 				err := file.Close()
 				if err != nil {
+					log.Error(err)
 				}
 			}(file)
 			ss.Done <- true
@@ -87,6 +89,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 			defer func(file *os.File) {
 				err := file.Close()
 				if err != nil {
+					log.Error(err)
 				}
 			}(file)
 		}

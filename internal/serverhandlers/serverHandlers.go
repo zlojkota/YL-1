@@ -3,6 +3,7 @@ package serverhandlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"github.com/zlojkota/YL-1/internal/hashhelper"
@@ -157,6 +158,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			return c.NoContent(http.StatusNotImplemented)
 		}
 		if !h.hasher.TestHash(&updateValue) {
+			fmt.Println("------Hash mismatch------")
 			return c.NoContent(http.StatusBadRequest)
 		}
 	default:

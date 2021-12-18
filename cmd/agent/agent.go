@@ -49,6 +49,7 @@ func (p *Worker) RequestSend(req *http.Request) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
+			log.Error(err)
 		}
 	}(res.Body)
 
