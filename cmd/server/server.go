@@ -134,13 +134,16 @@ func main() {
 	go func() {
 		<-sigChan
 		helper.SendDone()
-		log.Error("Stopping")
+		log.Error("Stopping Storage...")
 		helper.WaitDone()
+		log.Error("Storage stopped.")
+		log.Error("Stopping HTTP server...")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := e.Shutdown(ctx); err != nil {
 			e.Logger.Fatal(err)
 		}
+		log.Error("HTTP server stopped.")
 	}()
 
 	go helper.Run(*cfg.StoreInterval)

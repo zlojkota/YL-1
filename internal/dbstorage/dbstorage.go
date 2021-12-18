@@ -15,6 +15,7 @@ type DataBaseStorageState struct {
 	ServerHandler *serverhandlers.ServerHandler
 	Done          chan bool
 	db            *sql.DB
+	store         string
 }
 
 func (ss DataBaseStorageState) SendDone() {
@@ -45,6 +46,7 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 	if _, err := ss.db.Exec("create table if not exists metrics( id varchar(256),mtype varchar(256), delta int, val double precision, hash varchar(256))"); err != nil {
 		panic(err)
 	}
+	ss.store = store
 }
 
 func (ss *DataBaseStorageState) Restore() {
@@ -85,7 +87,6 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 
 func (ss DataBaseStorageState) SaveToStorage() {
 
-	//fmt.Println("----------------------------Start save to db-------------------------------------------")
 	mm := ss.ServerHandler.MetricMap()
 	for _, val := range mm {
 		var cnt int
@@ -95,8 +96,38 @@ func (ss DataBaseStorageState) SaveToStorage() {
 		} else {
 			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
 		}
-		//fmt.Println("++++++", val.ID)
 	}
-	//fmt.Println("============================Stop save to db============================================")
+}
+
+func (ss DataBaseStorageState) SaveToStorageLast() {
+
+	dbLast, err := sql.Open("pgx", ss.store)
+	if err != nil {
+		panic(err)
+	}
+	mm := ss.ServerHandler.MetricMap()
+	for _, val := range mm {
+		var cnt int
+		ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+		if cnt == 0 {
+			ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+		} else {
+			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+		}
+	}
+
+	mm = ss.ServerHandler.MetricMap()
+	allSaved := false
+	for !allSaved {
+		allSaved = true
+		for _, val := range mm {
+			var cnt int
+			dbLast.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND val=$3 AND delta=$4 AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cnt)
+			if cnt == 0 {
+				allSaved = false
+			}
+		}
+		log.Info("Wait save...")
+	}
 
 }
