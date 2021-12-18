@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
+	"github.com/zlojkota/YL-1/internal/dbstorage"
 	"github.com/zlojkota/YL-1/internal/filestorage"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"net/http"
@@ -26,11 +27,12 @@ type Config struct {
 }
 
 type StorageHelper interface {
-	Run(storeInterval time.Duration, store string)
-	SetServerHandler(serverHandler *serverhandlers.ServerHandler)
-	Restore(store string)
+	Run(storeInterval time.Duration)
+	Restore()
 	SendDone()
 	WaitDone()
+	Init(serverHandler *serverhandlers.ServerHandler, store string)
+	Ping() bool
 }
 
 func main() {
@@ -86,6 +88,16 @@ func main() {
 	handler := serverhandlers.NewServerHandler()
 	handler.SetHasher(*cfg.HashKey)
 
+	var helper StorageHelper
+
+	if *cfg.DatabaseDsn != "" {
+		helper = new(dbstorage.DbStorageState)
+		helper.Init(handler, *cfg.DatabaseDsn)
+
+	} else {
+		helper = new(filestorage.FileStorageState)
+		helper.Init(handler, *cfg.StoreFile)
+	}
 	//default answer
 	e.GET("/*", handler.NotFoundHandler)
 	e.POST("/*", handler.NotFoundHandler)
@@ -101,13 +113,16 @@ func main() {
 	e.GET("/value/:type/:metric", handler.GetHandler)
 	e.POST("/value/", handler.GetHandler)
 
-	var helper StorageHelper
-	helper = new(filestorage.FileStorageState)
-
-	helper.SetServerHandler(handler)
+	//ping DB
+	e.GET("/ping", func(c echo.Context) error {
+		if helper.Ping() {
+			return c.NoContent(http.StatusOK)
+		}
+		return c.NoContent(http.StatusInternalServerError)
+	})
 
 	if *cfg.Restore {
-		helper.Restore(*cfg.StoreFile)
+		helper.Restore()
 	}
 
 	sigChan := make(chan os.Signal, 1)
@@ -128,7 +143,7 @@ func main() {
 		}
 	}()
 
-	go helper.Run(*cfg.StoreInterval, *cfg.StoreFile)
+	go helper.Run(*cfg.StoreInterval)
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}

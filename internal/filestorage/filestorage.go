@@ -12,6 +12,7 @@ import (
 type FileStorageState struct {
 	ServerHandler *serverhandlers.ServerHandler
 	Done          chan bool
+	Store         string
 }
 
 func (ss FileStorageState) SendDone() {
@@ -22,13 +23,18 @@ func (ss FileStorageState) WaitDone() {
 	<-ss.Done
 }
 
-func (ss *FileStorageState) SetServerHandler(serverHandler *serverhandlers.ServerHandler) {
-	ss.ServerHandler = serverHandler
-	ss.Done = make(chan bool)
+func (ss FileStorageState) Ping() bool {
+	return false
 }
 
-func (ss *FileStorageState) Restore(storeFile string) {
-	file, err := os.OpenFile(storeFile, os.O_RDONLY|os.O_CREATE, 0777)
+func (ss *FileStorageState) Init(serverHandler *serverhandlers.ServerHandler, store string) {
+	ss.ServerHandler = serverHandler
+	ss.Done = make(chan bool)
+	ss.Store = store
+}
+
+func (ss *FileStorageState) Restore() {
+	file, err := os.OpenFile(ss.Store, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Error(err)
 	}
@@ -39,13 +45,13 @@ func (ss *FileStorageState) Restore(storeFile string) {
 	defer file.Close()
 }
 
-func (ss *FileStorageState) Run(storeInterval time.Duration, storeFile string) {
+func (ss *FileStorageState) Run(storeInterval time.Duration) {
 	tick := time.NewTicker(storeInterval)
 	defer tick.Stop()
 	for {
 		select {
 		case <-ss.Done:
-			file, err := os.Create(storeFile)
+			file, err := os.Create(ss.Store)
 			if err != nil {
 				log.Error(err)
 			}
@@ -55,7 +61,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration, storeFile string) {
 			ss.Done <- true
 			return
 		case <-tick.C:
-			file, err := os.Create(storeFile)
+			file, err := os.Create(ss.Store)
 			if err != nil {
 				log.Error(err)
 			}
