@@ -39,7 +39,6 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 	ss.Done = make(chan bool)
 	var err error
 	ss.db, err = sql.Open("pgx", store)
-	fmt.Println(store)
 	if err != nil {
 		panic(err)
 	}

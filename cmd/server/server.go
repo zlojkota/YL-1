@@ -147,5 +147,5 @@ func main() {
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}
-
+	log.Error("All STOPPED. BYE!")
 }
