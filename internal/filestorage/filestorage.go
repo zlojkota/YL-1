@@ -37,6 +37,13 @@ func (ss *FileStorageState) Run(storeInterval time.Duration, storeFile string) {
 	for {
 		select {
 		case <-ss.Done:
+			file, err := os.Create(storeFile)
+			if err != nil {
+				log.Error(err)
+			}
+			encoder := json.NewEncoder(file)
+			encoder.Encode(ss.ServerHandler.MetricMap())
+			defer file.Close()
 			return
 		case <-tick.C:
 			file, err := os.Create(storeFile)

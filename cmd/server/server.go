@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"github.com/caarlos0/env/v6"
 	"github.com/labstack/echo/v4"
@@ -23,12 +22,12 @@ type Config struct {
 	StoreFile     *string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
 	Restore       *bool          `env:"RESTORE" envDefault:"true"`
 	HashKey       *string        `env:"KEY" envDefault:""`
+	DatabaseDsn   *string        `env:"DATABASE_DSN" envDefault:""`
 }
-
-var cfg Config
 
 func main() {
 	// Setup
+	var cfg Config
 
 	err := env.Parse(&cfg)
 	if err != nil {
@@ -59,6 +58,11 @@ func main() {
 		cfg.HashKey = flag.String("k", "", "KEY")
 	} else {
 		_ = flag.String("k", "", "KEY")
+	}
+	if _, ok := os.LookupEnv("DATABASE_DSN"); !ok {
+		cfg.HashKey = flag.String("d", "", "DATABASE_DSN")
+	} else {
+		_ = flag.String("d", "", "DATABASE_DSN")
 	}
 	flag.Parse()
 
@@ -105,13 +109,6 @@ func main() {
 	go func() {
 		<-sigChan
 		log.Error("Stopping")
-		file, err := os.Create(*cfg.StoreFile)
-		if err != nil {
-			log.Error(err)
-		}
-		encoder := json.NewEncoder(file)
-		encoder.Encode(helper.ServerHandler.MetricMap())
-		defer file.Close()
 		helper.Done <- true
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
