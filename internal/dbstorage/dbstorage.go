@@ -44,7 +44,7 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 	if err != nil {
 		panic(err)
 	}
-	if _, err := ss.db.Exec("create table metrics( id varchar(32),mtype varchar(32), delta int, val double precision, hash varchar(256))"); err != nil {
+	if _, err := ss.db.Exec("create table if not exists metrics( id varchar(32),mtype varchar(32), delta int, val double precision, hash varchar(256))"); err != nil {
 		panic(err)
 	}
 }
@@ -69,6 +69,10 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 		select {
 		case <-ss.Done:
 			ss.SaveToStorage()
+			var res string
+			ss.db.QueryRow("SELECT id FROM metrics where id like 'PopulateCounter%'").Scan(&res)
+			fmt.Println("_____________", res, "___________")
+			ss.db.Close()
 			ss.Done <- true
 			return
 		case <-tick.C:
