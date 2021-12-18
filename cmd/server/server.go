@@ -25,6 +25,14 @@ type Config struct {
 	DatabaseDsn   *string        `env:"DATABASE_DSN" envDefault:""`
 }
 
+type StorageHelper interface {
+	Run(storeInterval time.Duration, store string)
+	SetServerHandler(serverHandler *serverhandlers.ServerHandler)
+	Restore(store string)
+	SendDone()
+	WaitDone()
+}
+
 func main() {
 	// Setup
 	var cfg Config
@@ -93,7 +101,9 @@ func main() {
 	e.GET("/value/:type/:metric", handler.GetHandler)
 	e.POST("/value/", handler.GetHandler)
 
-	var helper filestorage.FileStorageState
+	var helper StorageHelper
+	helper = new(filestorage.FileStorageState)
+
 	helper.SetServerHandler(handler)
 
 	if *cfg.Restore {
@@ -108,8 +118,9 @@ func main() {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigChan
+		helper.SendDone()
 		log.Error("Stopping")
-		helper.Done <- true
+		helper.WaitDone()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := e.Shutdown(ctx); err != nil {

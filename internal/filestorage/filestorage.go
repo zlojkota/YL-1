@@ -14,6 +14,14 @@ type FileStorageState struct {
 	Done          chan bool
 }
 
+func (ss FileStorageState) SendDone() {
+	ss.Done <- true
+}
+
+func (ss FileStorageState) WaitDone() {
+	<-ss.Done
+}
+
 func (ss *FileStorageState) SetServerHandler(serverHandler *serverhandlers.ServerHandler) {
 	ss.ServerHandler = serverHandler
 	ss.Done = make(chan bool)
@@ -44,6 +52,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration, storeFile string) {
 			encoder := json.NewEncoder(file)
 			encoder.Encode(ss.ServerHandler.MetricMap())
 			defer file.Close()
+			ss.Done <- true
 			return
 		case <-tick.C:
 			file, err := os.Create(storeFile)
