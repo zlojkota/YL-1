@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/zlojkota/YL-1/internal/hashhelper"
 	"net/http"
 	"strconv"
+
+	"github.com/zlojkota/YL-1/internal/hashhelper"
 
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/collector"
