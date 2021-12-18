@@ -70,7 +70,7 @@ func main() {
 		_ = flag.String("k", "", "KEY")
 	}
 	if _, ok := os.LookupEnv("DATABASE_DSN"); !ok {
-		cfg.HashKey = flag.String("d", "", "DATABASE_DSN")
+		cfg.DatabaseDsn = flag.String("d", "", "DATABASE_DSN")
 	} else {
 		_ = flag.String("d", "", "DATABASE_DSN")
 	}
