@@ -102,6 +102,7 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 	}
 	mm := ss.ServerHandler.MetricMap()
 	allSaved := false
+	counter := 100
 	for !allSaved {
 		allSaved = true
 		for _, val := range mm {
@@ -121,9 +122,14 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 			}
 		}
 		log.Info("Wait save...")
+		if counter == 0 {
+			log.Error("Dont Save data.")
+			allSaved = true
+		}
 	}
-	log.Info("Saved last Data to DB")
-
+	if counter != 0 {
+		log.Info("Saved last Data to DB")
+	}
 	ss.db.Close()
 	log.Info("Primary DB connection close")
 	dbLast.Close()
