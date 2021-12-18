@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"github.com/caarlos0/env/v6"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -46,12 +45,7 @@ func (p *Worker) RequestSend(req *http.Request) {
 	} else {
 		log.Print("StatusCode:", res.StatusCode, " URL:", req.URL.Path, ", Body:", string(buf))
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Error(err)
-		}
-	}(res.Body)
+	defer res.Body.Close()
 
 }
 

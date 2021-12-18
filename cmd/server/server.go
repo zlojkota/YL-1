@@ -89,7 +89,7 @@ func main() {
 	handler.SetHasher(*cfg.HashKey)
 
 	var helper StorageHelper
-	*cfg.DatabaseDsn = ""
+
 	if *cfg.DatabaseDsn != "" {
 		helper = new(dbstorage.DataBaseStorageState)
 		helper.Init(handler, *cfg.DatabaseDsn)

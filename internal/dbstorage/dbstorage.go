@@ -58,6 +58,9 @@ func (ss *DataBaseStorageState) Restore() {
 	for rows.Next() {
 		var m collector.Metrics
 		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
+		if err != nil {
+			log.Error(err)
+		}
 		ss.ServerHandler.SetMetricMapItem(&m)
 	}
 }
