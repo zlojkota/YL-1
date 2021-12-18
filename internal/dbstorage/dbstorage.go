@@ -2,7 +2,8 @@ package dbstorage
 
 import (
 	"database/sql"
-	_ "github.com/jackc/pgx/v4"
+	//_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"time"

@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"flag"
+	"github.com/caarlos0/env/v6"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -10,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/caarlos0/env/v6"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/agentcollector"
 	"github.com/zlojkota/YL-1/internal/collector"
@@ -45,7 +46,11 @@ func (p *Worker) RequestSend(req *http.Request) {
 	} else {
 		log.Print("StatusCode:", res.StatusCode, " URL:", req.URL.Path, ", Body:", string(buf))
 	}
-	defer res.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+		}
+	}(res.Body)
 
 }
 

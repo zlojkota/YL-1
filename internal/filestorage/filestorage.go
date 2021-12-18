@@ -40,9 +40,16 @@ func (ss *FileStorageState) Restore() {
 	}
 	decoder := json.NewDecoder(file)
 	mm := make(map[string]*collector.Metrics)
-	decoder.Decode(&mm)
+	err = decoder.Decode(&mm)
+	if err != nil {
+		return
+	}
 	ss.ServerHandler.SetMetricMap(mm)
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+		}
+	}(file)
 }
 
 func (ss *FileStorageState) Run(storeInterval time.Duration) {
@@ -56,8 +63,15 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 				log.Error(err)
 			}
 			encoder := json.NewEncoder(file)
-			encoder.Encode(ss.ServerHandler.MetricMap())
-			defer file.Close()
+			err = encoder.Encode(ss.ServerHandler.MetricMap())
+			if err != nil {
+				return
+			}
+			defer func(file *os.File) {
+				err := file.Close()
+				if err != nil {
+				}
+			}(file)
 			ss.Done <- true
 			return
 		case <-tick.C:
@@ -66,8 +80,15 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 				log.Error(err)
 			}
 			encoder := json.NewEncoder(file)
-			encoder.Encode(ss.ServerHandler.MetricMap())
-			defer file.Close()
+			err = encoder.Encode(ss.ServerHandler.MetricMap())
+			if err != nil {
+				return
+			}
+			defer func(file *os.File) {
+				err := file.Close()
+				if err != nil {
+				}
+			}(file)
 		}
 	}
 
