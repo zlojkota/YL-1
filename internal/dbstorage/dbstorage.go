@@ -89,7 +89,7 @@ func (ss DataBaseStorageState) SaveToStorage() {
 	mm := ss.ServerHandler.MetricMap()
 	for _, val := range mm {
 		var cnt int
-		ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1", val.ID).Scan(&cnt)
+		ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
 		if cnt == 0 {
 			ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
 		} else {
