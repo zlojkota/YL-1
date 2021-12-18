@@ -91,7 +91,7 @@ func main() {
 	var helper StorageHelper
 
 	if *cfg.DatabaseDsn != "" {
-		helper = new(dbstorage.DbStorageState)
+		helper = new(dbstorage.DataBaseStorageState)
 		helper.Init(handler, *cfg.DatabaseDsn)
 
 	} else {

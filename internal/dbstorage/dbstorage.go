@@ -1,41 +1,29 @@
 package dbstorage
 
 import (
+	"database/sql"
+	_ "github.com/jackc/pgx/v4"
 	"github.com/labstack/gommon/log"
-	"github.com/zlojkota/YL-1/internal/collector"
-	"time"
-
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"time"
 )
 
-type DbStorageState struct {
+type DataBaseStorageState struct {
 	ServerHandler *serverhandlers.ServerHandler
 	Done          chan bool
-	Db            *gorm.DB
+	db            *sql.DB
 }
 
-type MetricStruct struct {
-	gorm.Model
-	collector.Metrics
-}
-
-func (ss DbStorageState) SendDone() {
+func (ss DataBaseStorageState) SendDone() {
 	ss.Done <- true
 }
 
-func (ss DbStorageState) WaitDone() {
+func (ss DataBaseStorageState) WaitDone() {
 	<-ss.Done
 }
 
-func (ss DbStorageState) Ping() bool {
-	db, err := ss.Db.DB()
-	if err != nil {
-		log.Error(err)
-		return false
-	}
-	if err := db.Ping(); err != nil {
+func (ss DataBaseStorageState) Ping() bool {
+	if err := ss.db.Ping(); err != nil {
 		log.Error(err)
 		return false
 	} else {
@@ -43,22 +31,22 @@ func (ss DbStorageState) Ping() bool {
 	}
 }
 
-func (ss *DbStorageState) Init(serverHandler *serverhandlers.ServerHandler, store string) {
+func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler, store string) {
 	ss.ServerHandler = serverHandler
 	ss.Done = make(chan bool)
 	var err error
-	ss.Db, err = gorm.Open(postgres.Open(store), &gorm.Config{})
+	ss.db, err = sql.Open("pgx", store)
 	if err != nil {
 		panic(err)
 	}
 
 }
 
-func (ss *DbStorageState) Restore() {
+func (ss *DataBaseStorageState) Restore() {
 
 }
 
-func (ss *DbStorageState) Run(storeInterval time.Duration) {
+func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 	tick := time.NewTicker(storeInterval)
 	defer tick.Stop()
 	for {
