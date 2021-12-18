@@ -44,7 +44,7 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 	if err != nil {
 		panic(err)
 	}
-	if _, err := ss.db.Exec("create table if not exists metrics( id varchar(32),mtype varchar(32), delta int, val double precision, hash varchar(256))"); err != nil {
+	if _, err := ss.db.Exec("create table metrics( id varchar(32),mtype varchar(32), delta int, val double precision, hash varchar(256))"); err != nil {
 		panic(err)
 	}
 }
