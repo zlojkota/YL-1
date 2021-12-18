@@ -125,6 +125,7 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 		if counter == 0 {
 			log.Error("Dont Save data.")
 			allSaved = true
+			ss.Done <- true
 		}
 	}
 	if counter != 0 {
