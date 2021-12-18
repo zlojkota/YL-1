@@ -84,7 +84,7 @@ func main() {
 	}
 	flag.Parse()
 
-	agent.InitAgent(&worker, *worker.ServerAddr)
+	agent.InitAgentJSON(&worker, *worker.ServerAddr)
 	agent.SetHasher(*worker.HashKey)
 
 	t.Handle(*worker.PoolInterval, &agent)

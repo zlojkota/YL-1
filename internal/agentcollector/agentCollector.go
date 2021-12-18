@@ -31,18 +31,24 @@ func (p *Agent) SetHasher(key string) {
 	p.hasher.SetKey(key)
 }
 
-func (p *Agent) InitAgent(agentCollector AgentCollector, serverAddr ...string) {
+func (p *Agent) InitAgentPTX(agentCollector AgentCollector, serverAddr string) {
 	p.agentCollector = agentCollector
 	if len(serverAddr) == 0 {
 		p.serverAddr = "http://localhost:8080"
 	} else {
-		if serverAddr[0] == "" {
-			p.serverAddr = "http://localhost:8080"
-		} else {
-			p.serverAddr = fmt.Sprintf("http://%s", serverAddr[0])
-		}
+		p.serverAddr = fmt.Sprintf("http://%s", serverAddr)
 	}
+	p.sendJSON = false
+}
 
+func (p *Agent) InitAgentJSON(agentCollector AgentCollector, serverAddr string) {
+	p.agentCollector = agentCollector
+	if len(serverAddr) == 0 {
+		p.serverAddr = "http://localhost:8080"
+	} else {
+		p.serverAddr = fmt.Sprintf("http://%s", serverAddr)
+	}
+	p.sendJSON = true
 }
 
 func (p *Agent) MakeRequestJSON(metrics collector.Metrics) (*http.Request, error) {
@@ -92,7 +98,7 @@ func (p *Agent) MakeRequest(metrics *[]collector.Metrics) {
 		log.Error("No AgentCollector Init!")
 		return
 	}
-	p.sendJSON = !p.sendJSON
+	//p.sendJSON = !p.sendJSON
 	if p.sendJSON {
 		for _, val := range *metrics {
 			req, err := p.MakeRequestJSON(val)
