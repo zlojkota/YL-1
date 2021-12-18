@@ -2,7 +2,6 @@ package dbstorage
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -71,11 +70,7 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 	for {
 		select {
 		case <-ss.Done:
-			ss.SaveToStorage()
-			var res string
-			ss.db.QueryRow("SELECT id FROM metrics where id like 'PopulateCounter%'").Scan(&res)
-			fmt.Println("_____________", res, "___________")
-			ss.db.Close()
+			ss.SaveToStorageLast()
 			ss.Done <- true
 			return
 		case <-tick.C:
@@ -106,28 +101,31 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 		panic(err)
 	}
 	mm := ss.ServerHandler.MetricMap()
-	for _, val := range mm {
-		var cnt int
-		ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
-		if cnt == 0 {
-			ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
-		} else {
-			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
-		}
-	}
-
-	mm = ss.ServerHandler.MetricMap()
 	allSaved := false
 	for !allSaved {
 		allSaved = true
 		for _, val := range mm {
 			var cnt int
-			dbLast.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND val=$3 AND delta=$4 AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cnt)
+			ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+			if cnt == 0 {
+				ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+			} else {
+				ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+			}
+		}
+		for _, val := range mm {
+			var cnt int
+			dbLast.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND ((delta is null and val=$3) or (delta=$4 and val is null)) AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cnt)
 			if cnt == 0 {
 				allSaved = false
 			}
 		}
 		log.Info("Wait save...")
 	}
+	log.Info("Saved last Data to DB")
 
+	ss.db.Close()
+	log.Info("Primary DB connection close")
+	dbLast.Close()
+	log.Info("Testing DB connection close")
 }

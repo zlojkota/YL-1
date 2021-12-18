@@ -133,10 +133,6 @@ func main() {
 		syscall.SIGQUIT)
 	go func() {
 		<-sigChan
-		helper.SendDone()
-		log.Error("Stopping Storage...")
-		helper.WaitDone()
-		log.Error("Storage stopped.")
 		log.Error("Stopping HTTP server...")
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -144,11 +140,16 @@ func main() {
 			e.Logger.Fatal(err)
 		}
 		log.Error("HTTP server stopped.")
+
+		helper.SendDone()
+		log.Error("Stopping Storage...")
 	}()
 
 	go helper.Run(*cfg.StoreInterval)
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}
+	helper.WaitDone()
+	log.Error("Storage stopped.")
 	log.Error("All STOPPED. BYE!")
 }
