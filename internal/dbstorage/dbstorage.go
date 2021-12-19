@@ -130,7 +130,16 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 				allSaved = false
 			}
 		}
-		log.Info("Wait save...")
+		if !allSaved {
+			log.Info("Wait save...")
+			log.Info("reconnect to DB...")
+			ss.db.Close()
+			var err error
+			ss.db, err = sql.Open("pgx", ss.store)
+			if err != nil {
+				log.Error(err)
+			}
+		}
 		if counter == 0 {
 			log.Error("Dont Save data.")
 			allSaved = true
