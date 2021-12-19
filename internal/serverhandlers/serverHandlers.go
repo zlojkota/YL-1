@@ -105,7 +105,7 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 }
 
 func (h *ServerHandler) UpdateHandler(c echo.Context) error {
-
+	h.State.MetricMapMuxLock()
 	var updateValue collector.Metrics
 	contentType := c.Request().Header.Get("Content-Type")
 	if contentType == "" &&
@@ -123,6 +123,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		case counter:
 			val, err := strconv.ParseUint(c.Param("value"), 0, 64)
 			if err != nil {
+				h.State.MetricMapMuxUnlock()
 				return c.NoContent(http.StatusBadRequest)
 			}
 			updateValue.Delta = &val
@@ -130,22 +131,27 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		case gauge:
 			val, err := strconv.ParseFloat(c.Param("value"), 64)
 			if err != nil {
+				h.State.MetricMapMuxUnlock()
 				return c.NoContent(http.StatusBadRequest)
 			}
 			updateValue.Value = &val
 			updateValue.Hash = h.State.GetHaser().HashG(updateValue.ID, val)
 		default:
+			h.State.MetricMapMuxUnlock()
 			return c.NoContent(http.StatusNotImplemented)
 		}
 	case "application/json":
 		err := json.NewDecoder(c.Request().Body).Decode(&updateValue)
 		if err != nil {
+			h.State.MetricMapMuxUnlock()
 			return c.NoContent(http.StatusNotImplemented)
 		}
 		if !h.State.GetHaser().TestHash(&updateValue) {
+			h.State.MetricMapMuxUnlock()
 			return c.NoContent(http.StatusBadRequest)
 		}
 	default:
+		h.State.MetricMapMuxUnlock()
 		return c.NoContent(http.StatusNotImplemented)
 	}
 	if d, ok := h.State.MetricMapItem(updateValue.ID); ok && d.MType == counter {
@@ -154,10 +160,12 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		updateValue.Hash = h.State.GetHaser().Hash(&updateValue)
 	}
 	h.State.SetMetricMapItem(&updateValue)
+	h.State.MetricMapMuxUnlock()
 	return c.NoContent(http.StatusOK)
 }
 
 func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
+	h.State.MetricMapMuxLock()
 	var updateValue []*collector.Metrics
 	switch c.Request().Header.Get("Content-Type") {
 	case "application/json":
@@ -166,9 +174,11 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 			return c.NoContent(http.StatusNotImplemented)
 		}
 		if !h.State.GetHaser().TestBatchHash(updateValue) {
+			h.State.MetricMapMuxUnlock()
 			return c.NoContent(http.StatusBadRequest)
 		}
 	default:
+		h.State.MetricMapMuxUnlock()
 		return c.NoContent(http.StatusNotImplemented)
 	}
 	value := make(map[string]*collector.Metrics)
@@ -181,5 +191,6 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 		value[val.ID] = val
 	}
 	h.State.SetMetricMap(value)
+	h.State.MetricMapMuxUnlock()
 	return c.NoContent(http.StatusOK)
 }
