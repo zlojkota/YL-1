@@ -167,8 +167,8 @@ func (ss *DataBaseStorageState) MetricMapMuxUnlock() {
 }
 
 func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
-	var ret map[string]*collector.Metrics
-	ret = make(map[string]*collector.Metrics)
+
+	ret := make(map[string]*collector.Metrics)
 
 	rows, err := ss.db.Query("SELECT * FROM metrics")
 	if err != nil {
