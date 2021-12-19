@@ -10,31 +10,34 @@ import (
 )
 
 type FileStorageState struct {
-	ServerHandler *serverhandlers.ServerHandler
-	Done          chan bool
-	Store         string
+	state serverhandlers.Stater
+	Done  chan bool
+	store string
 }
 
-func (ss FileStorageState) SendDone() {
+func (ss *FileStorageState) SendDone() {
 	ss.Done <- true
 }
 
-func (ss FileStorageState) WaitDone() {
+func (ss *FileStorageState) WaitDone() {
 	<-ss.Done
 }
 
-func (ss FileStorageState) Ping() bool {
+func (ss *FileStorageState) Ping() bool {
 	return false
 }
 
-func (ss *FileStorageState) Init(serverHandler *serverhandlers.ServerHandler, store string) {
-	ss.ServerHandler = serverHandler
+func (ss *FileStorageState) Init(store string) {
 	ss.Done = make(chan bool)
-	ss.Store = store
+	ss.store = store
+}
+
+func (ss *FileStorageState) SetState(state serverhandlers.Stater) {
+	ss.state = state
 }
 
 func (ss *FileStorageState) Restore() {
-	file, err := os.OpenFile(ss.Store, os.O_RDONLY|os.O_CREATE, 0777)
+	file, err := os.OpenFile(ss.store, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Error(err)
 	}
@@ -44,7 +47,7 @@ func (ss *FileStorageState) Restore() {
 	if err != nil {
 		return
 	}
-	ss.ServerHandler.SetMetricMap(mm)
+	ss.state.SetMetricMap(mm)
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
@@ -59,12 +62,12 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 	for {
 		select {
 		case <-ss.Done:
-			file, err := os.Create(ss.Store)
+			file, err := os.Create(ss.store)
 			if err != nil {
 				log.Error(err)
 			}
 			encoder := json.NewEncoder(file)
-			err = encoder.Encode(ss.ServerHandler.MetricMap())
+			err = encoder.Encode(ss.state.MetricMap())
 			if err != nil {
 				return
 			}
@@ -77,12 +80,12 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 			ss.Done <- true
 			return
 		case <-tick.C:
-			file, err := os.Create(ss.Store)
+			file, err := os.Create(ss.store)
 			if err != nil {
 				log.Error(err)
 			}
 			encoder := json.NewEncoder(file)
-			err = encoder.Encode(ss.ServerHandler.MetricMap())
+			err = encoder.Encode(ss.state.MetricMap())
 			if err != nil {
 				return
 			}

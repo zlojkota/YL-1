@@ -10,21 +10,21 @@ import (
 )
 
 type Hasher struct {
-	key    string
+	Key    string
 	keyMux sync.Mutex
 }
 
 func (hsh *Hasher) SetKey(key string) {
 	hsh.keyMux.Lock()
-	hsh.key = key
+	hsh.Key = key
 	hsh.keyMux.Unlock()
 }
 
 func (hsh *Hasher) hash(src string) string {
-	if hsh.key == "" {
+	if hsh.Key == "" {
 		return ""
 	}
-	h := hmac.New(sha256.New, []byte(hsh.key))
+	h := hmac.New(sha256.New, []byte(hsh.Key))
 	h.Write([]byte(src))
 	sign := h.Sum(nil)
 	dst := make([]byte, hex.EncodedLen(len(sign)))

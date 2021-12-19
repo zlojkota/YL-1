@@ -5,29 +5,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
+	"github.com/zlojkota/YL-1/internal/hashhelper"
+	"github.com/zlojkota/YL-1/internal/serverhandlers"
+	"sync"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/labstack/gommon/log"
-	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"time"
 )
 
 type DataBaseStorageState struct {
-	ServerHandler *serverhandlers.ServerHandler
-	Done          chan bool
-	db            *sql.DB
-	store         string
+	Done  chan bool
+	db    *sql.DB
+	store string
+	state serverhandlers.Stater
+
+	metricMap    map[string]*collector.Metrics
+	metricMapMux sync.Mutex
+	Hasher       *hashhelper.Hasher
 }
 
-func (ss DataBaseStorageState) SendDone() {
+func (ss *DataBaseStorageState) SendDone() {
 	ss.Done <- true
 }
 
-func (ss DataBaseStorageState) WaitDone() {
+func (ss *DataBaseStorageState) WaitDone() {
 	<-ss.Done
 }
 
-func (ss DataBaseStorageState) Ping() bool {
+func (ss *DataBaseStorageState) Ping() bool {
 	if err := ss.db.Ping(); err != nil {
 		log.Error(err)
 		return false
@@ -36,8 +42,7 @@ func (ss DataBaseStorageState) Ping() bool {
 	}
 }
 
-func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler, store string) {
-	ss.ServerHandler = serverHandler
+func (ss *DataBaseStorageState) Init(store string) {
 	ss.Done = make(chan bool)
 	var err error
 	ss.db, err = sql.Open("pgx", store)
@@ -48,6 +53,10 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 		panic(err)
 	}
 	ss.store = store
+}
+
+func (ss *DataBaseStorageState) SetState(state serverhandlers.Stater) {
+	ss.state = state
 }
 
 func (ss *DataBaseStorageState) Restore() {
@@ -69,7 +78,7 @@ func (ss *DataBaseStorageState) Restore() {
 		mmj, _ := json.Marshal(m)
 		fmt.Println(string(mmj))
 
-		ss.ServerHandler.SetMetricMapItem(&m)
+		ss.state.SetMetricMapItem(&m)
 	}
 }
 
@@ -89,9 +98,9 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 
 }
 
-func (ss DataBaseStorageState) SaveToStorage() {
+func (ss *DataBaseStorageState) SaveToStorage() {
 
-	mm := ss.ServerHandler.MetricMap()
+	mm := ss.state.MetricMap()
 	for _, val := range mm {
 		var cnt int
 		ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
@@ -103,13 +112,13 @@ func (ss DataBaseStorageState) SaveToStorage() {
 	}
 }
 
-func (ss DataBaseStorageState) SaveToStorageLast() {
+func (ss *DataBaseStorageState) SaveToStorageLast() {
 
 	dbLast, err := sql.Open("pgx", ss.store)
 	if err != nil {
 		panic(err)
 	}
-	mm := ss.ServerHandler.MetricMap()
+	mm := ss.state.MetricMap()
 	allSaved := false
 	counter := 100
 	for !allSaved {
@@ -143,8 +152,9 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 		if counter == 0 {
 			log.Error("Dont Save data.")
 			allSaved = true
+		} else {
+			counter--
 		}
-		counter--
 	}
 	if counter != 0 {
 		log.Info("Saved last Data to DB")
@@ -153,4 +163,39 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 	log.Info("Primary DB connection close")
 	dbLast.Close()
 	log.Info("Testing DB connection close")
+}
+
+func (ss *DataBaseStorageState) MetricMapMuxLock() {
+
+}
+
+func (ss *DataBaseStorageState) MetricMapMuxUnlock() {
+
+}
+
+func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
+
+	return nil
+}
+
+func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Metrics) {
+
+}
+
+func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, bool) {
+	return nil, false
+}
+
+func (ss *DataBaseStorageState) SetMetricMapItem(metricMap *collector.Metrics) {
+
+}
+
+func (ss *DataBaseStorageState) GetHaser() *hashhelper.Hasher {
+	return nil
+}
+
+func (ss *DataBaseStorageState) InitHasher(hashKey string) {
+	ss.Hasher = &hashhelper.Hasher{
+		Key: hashKey,
+	}
 }

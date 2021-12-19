@@ -1,6 +1,7 @@
 package yl1
 
 import (
+	"github.com/zlojkota/YL-1/internal/memorystate"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -46,7 +47,10 @@ func (p *Worker) RequestSend(req *http.Request) {
 
 func (p *Worker) InitWorker(t *testing.T) {
 	p.t = t
-	p.h = serverhandlers.NewServerHandler()
+	p.h = new(serverhandlers.ServerHandler)
+	mem := new(memorystate.MemoryState)
+	mem.InitHasher("")
+	p.h.Init(mem)
 	p.e = echo.New()
 	p.e.GET("/*", p.h.NotFoundHandler)
 	p.e.POST("/*", p.h.NotFoundHandler)
@@ -94,8 +98,8 @@ func TestAllapp(t *testing.T) {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
 			newMapCounter := make(map[string]int64)
-			mm := worker.h.MetricMap()
-			worker.h.MetricMapMuxLock()
+			mm := worker.h.State.MetricMap()
+			worker.h.State.MetricMapMuxLock()
 			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
@@ -104,7 +108,7 @@ func TestAllapp(t *testing.T) {
 					newMapCounter[val.ID] = *val.Delta
 				}
 			}
-			worker.h.MetricMapMuxUnlock()
+			worker.h.State.MetricMapMuxUnlock()
 			if iter == 0 {
 				col.Done <- true
 				loop = false
@@ -152,7 +156,7 @@ func TestAllapp(t *testing.T) {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
 			newMapCounter := make(map[string]int64)
-			mm := worker.h.MetricMap()
+			mm := worker.h.State.MetricMap()
 			for _, val := range mm {
 				switch val.MType {
 				case "gauge":

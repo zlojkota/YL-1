@@ -4,64 +4,49 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"github.com/zlojkota/YL-1/internal/hashhelper"
 	"html/template"
 	"net/http"
 	"strconv"
-	"sync"
-
-	"github.com/labstack/echo/v4"
+	"time"
 )
 
+type Stater interface {
+	MetricMapMuxLock()
+	MetricMapMuxUnlock()
+	MetricMap() map[string]*collector.Metrics
+	SetMetricMap(metricMap map[string]*collector.Metrics)
+	MetricMapItem(item string) (*collector.Metrics, bool)
+	SetMetricMapItem(metricMap *collector.Metrics)
+	GetHaser() *hashhelper.Hasher
+	InitHasher(hashKey string)
+}
+
+type Storager interface {
+	Run(storeInterval time.Duration)
+	Restore()
+	SendDone()
+	WaitDone()
+	Init(store string)
+	SetState(state Stater)
+	Ping() bool
+}
+
 type ServerHandler struct {
-	metricMap    map[string]*collector.Metrics
-	metricMapMux sync.Mutex
-	IndexPath    string
-	hasher       hashhelper.Hasher
-}
-
-func (h *ServerHandler) MetricMapMuxLock() {
-	h.metricMapMux.Lock()
-}
-func (h *ServerHandler) MetricMapMuxUnlock() {
-	h.metricMapMux.Unlock()
-}
-
-func (h *ServerHandler) SetHasher(key string) {
-	h.hasher.SetKey(key)
-}
-
-func (h *ServerHandler) MetricMap() map[string]*collector.Metrics {
-	return h.metricMap
-}
-
-func (h *ServerHandler) SetMetricMap(metricMap map[string]*collector.Metrics) {
-	h.metricMapMux.Lock()
-	h.metricMap = metricMap
-	h.metricMapMux.Unlock()
-}
-
-func (h *ServerHandler) MetricMapItem(item string) (*collector.Metrics, bool) {
-	res, ok := h.metricMap[item]
-	return res, ok
-}
-
-func (h *ServerHandler) SetMetricMapItem(metricMap *collector.Metrics) {
-	h.metricMapMux.Lock()
-	h.metricMap[metricMap.ID] = metricMap
-	h.metricMapMux.Unlock()
+	IndexPath string
+	State     Stater
 }
 
 const counter = "counter"
 const gauge = "gauge"
 
-func NewServerHandler() *ServerHandler {
-	p := new(ServerHandler)
-	p.metricMap = make(map[string]*collector.Metrics)
-	p.IndexPath = "./internal/httpRoot/index.html"
-	return p
+func (h *ServerHandler) Init(state Stater) {
+	h.IndexPath = "./internal/httpRoot/index.html"
+	h.State = state
+	h.State.SetMetricMap(make(map[string]*collector.Metrics))
 }
 
 func (h *ServerHandler) NotFoundHandler(c echo.Context) error {
@@ -76,7 +61,7 @@ func (h *ServerHandler) MainHandler(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal ERROR")
 	}
 	var buf bytes.Buffer
-	mm := h.MetricMap()
+	mm := h.State.MetricMap()
 	err = t.Execute(&buf, mm)
 	if err != nil {
 		log.Error(err)
@@ -93,8 +78,8 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 		if err != nil {
 			return c.NoContent(http.StatusNotImplemented)
 		}
-		if val, ok := h.MetricMapItem(data.ID); ok {
-			val.Hash = h.hasher.Hash(val)
+		if val, ok := h.State.MetricMapItem(data.ID); ok {
+			val.Hash = h.State.GetHaser().Hash(val)
 			return c.JSON(http.StatusOK, val)
 		} else {
 			return c.NoContent(http.StatusNotFound)
@@ -102,13 +87,13 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 	} else {
 		switch typeM := c.Param("type"); typeM {
 		case counter:
-			val, ok := h.MetricMapItem(c.Param("metric"))
+			val, ok := h.State.MetricMapItem(c.Param("metric"))
 			if !ok {
 				return c.NoContent(http.StatusNotFound)
 			}
 			return c.String(http.StatusOK, strconv.FormatInt(*val.Delta, 10))
 		case gauge:
-			val, ok := h.MetricMapItem(c.Param("metric"))
+			val, ok := h.State.MetricMapItem(c.Param("metric"))
 			if !ok {
 				return c.NoContent(http.StatusNotFound)
 			}
@@ -142,14 +127,14 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 				return c.NoContent(http.StatusBadRequest)
 			}
 			updateValue.Delta = &val
-			updateValue.Hash = h.hasher.HashC(updateValue.ID, val)
+			updateValue.Hash = h.State.GetHaser().HashC(updateValue.ID, val)
 		case gauge:
 			val, err := strconv.ParseFloat(c.Param("value"), 64)
 			if err != nil {
 				return c.NoContent(http.StatusBadRequest)
 			}
 			updateValue.Value = &val
-			updateValue.Hash = h.hasher.HashG(updateValue.ID, val)
+			updateValue.Hash = h.State.GetHaser().HashG(updateValue.ID, val)
 		default:
 			return c.NoContent(http.StatusNotImplemented)
 		}
@@ -158,30 +143,30 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		if err != nil {
 			return c.NoContent(http.StatusNotImplemented)
 		}
-		if !h.hasher.TestHash(&updateValue) {
+		if !h.State.GetHaser().TestHash(&updateValue) {
 			fmt.Println("------Hash mismatch------")
 			return c.NoContent(http.StatusBadRequest)
 		}
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
-	if _, ok := h.MetricMapItem(updateValue.ID); !ok {
-		h.SetMetricMapItem(&updateValue)
+	if _, ok := h.State.MetricMapItem(updateValue.ID); !ok {
+		h.State.SetMetricMapItem(&updateValue)
 		return c.NoContent(http.StatusOK)
 	}
 	switch updateValue.MType {
 	case counter:
-		metric, _ := h.MetricMapItem(updateValue.ID)
+		metric, _ := h.State.MetricMapItem(updateValue.ID)
 		delta := *metric.Delta + *updateValue.Delta
-		h.SetMetricMapItem(&collector.Metrics{
+		h.State.SetMetricMapItem(&collector.Metrics{
 			ID:    updateValue.ID,
 			MType: updateValue.MType,
 			Delta: &delta,
-			Hash:  h.hasher.HashC(updateValue.ID, delta),
+			Hash:  h.State.GetHaser().HashC(updateValue.ID, delta),
 		})
 		return c.NoContent(http.StatusOK)
 	case gauge:
-		h.SetMetricMapItem(&collector.Metrics{
+		h.State.SetMetricMapItem(&collector.Metrics{
 			ID:    updateValue.ID,
 			MType: updateValue.MType,
 			Value: updateValue.Value,

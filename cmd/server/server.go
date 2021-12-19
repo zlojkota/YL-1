@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/dbstorage"
 	"github.com/zlojkota/YL-1/internal/filestorage"
+	"github.com/zlojkota/YL-1/internal/memorystate"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 	"net/http"
 	"os"
@@ -24,15 +25,6 @@ type Config struct {
 	Restore       *bool          `env:"RESTORE" envDefault:"true"`
 	HashKey       *string        `env:"KEY" envDefault:""`
 	DatabaseDsn   *string        `env:"DATABASE_DSN" envDefault:""`
-}
-
-type StorageHelper interface {
-	Run(storeInterval time.Duration)
-	Restore()
-	SendDone()
-	WaitDone()
-	Init(serverHandler *serverhandlers.ServerHandler, store string)
-	Ping() bool
 }
 
 func main() {
@@ -85,18 +77,34 @@ func main() {
 		Format: "${time_rfc3339} method=${method}, uri=${uri}, status=${status} Content-Type=${header:Content-Type} =${header:Content-Type}\n",
 	}))
 
-	handler := serverhandlers.NewServerHandler()
-	handler.SetHasher(*cfg.HashKey)
-
-	var helper StorageHelper
+	var handler serverhandlers.ServerHandler
+	var helper serverhandlers.Storager
 
 	if *cfg.DatabaseDsn != "" {
-		helper = new(dbstorage.DataBaseStorageState)
-		helper.Init(handler, *cfg.DatabaseDsn)
+		helperNew := new(dbstorage.DataBaseStorageState)
+		helperNew.Init(*cfg.DatabaseDsn)
+		helper = helperNew
+
+		///////////////////
+		var stater memorystate.MemoryState
+		stater.InitHasher(*cfg.HashKey)
+		handler.Init(&stater)
+		helper.SetState(&stater)
+		///////////////////
+
+		//helperNew.InitHasher(*cfg.HashKey)
+		//handler.Init(helperNew)
+		//helper.SetState(helperNew)
 
 	} else {
+		var stater memorystate.MemoryState
+		stater.InitHasher(*cfg.HashKey)
+
 		helper = new(filestorage.FileStorageState)
-		helper.Init(handler, *cfg.StoreFile)
+		helper.Init(*cfg.StoreFile)
+		handler.Init(&stater)
+		helper.SetState(&stater)
+
 	}
 	//default answer
 	e.GET("/*", handler.NotFoundHandler)
