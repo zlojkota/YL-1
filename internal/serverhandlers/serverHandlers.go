@@ -171,6 +171,7 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 	case "application/json":
 		err := json.NewDecoder(c.Request().Body).Decode(&updateValue)
 		if err != nil {
+			h.State.MetricMapMuxUnlock()
 			return c.NoContent(http.StatusNotImplemented)
 		}
 		if !h.State.GetHaser().TestBatchHash(updateValue) {
