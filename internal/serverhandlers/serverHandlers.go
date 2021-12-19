@@ -148,33 +148,13 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
-	if _, ok := h.State.MetricMapItem(updateValue.ID); !ok {
+	if d, ok := h.State.MetricMapItem(updateValue.ID); ok && d.MType == counter {
+		delta := *d.Delta + *updateValue.Delta
+		updateValue.Delta = &delta
 		updateValue.Hash = h.State.GetHaser().Hash(&updateValue)
-		h.State.SetMetricMapItem(&updateValue)
-		return c.NoContent(http.StatusOK)
 	}
-	switch updateValue.MType {
-	case counter:
-		metric, _ := h.State.MetricMapItem(updateValue.ID)
-		delta := *metric.Delta + *updateValue.Delta
-		h.State.SetMetricMapItem(&collector.Metrics{
-			ID:    updateValue.ID,
-			MType: updateValue.MType,
-			Delta: &delta,
-			Hash:  h.State.GetHaser().HashC(updateValue.ID, delta),
-		})
-		return c.NoContent(http.StatusOK)
-	case gauge:
-		h.State.SetMetricMapItem(&collector.Metrics{
-			ID:    updateValue.ID,
-			MType: updateValue.MType,
-			Value: updateValue.Value,
-			Hash:  updateValue.Hash,
-		})
-		return c.NoContent(http.StatusOK)
-	default:
-		return c.NoContent(http.StatusNotImplemented)
-	}
+	h.State.SetMetricMapItem(&updateValue)
+	return c.NoContent(http.StatusOK)
 }
 
 func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
@@ -199,7 +179,6 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 			val.Hash = h.State.GetHaser().Hash(val)
 		}
 		value[val.ID] = val
-
 	}
 	h.State.SetMetricMap(value)
 	return c.NoContent(http.StatusOK)
