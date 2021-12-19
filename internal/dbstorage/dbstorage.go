@@ -54,6 +54,10 @@ func (ss *DataBaseStorageState) Restore() {
 	if err != nil {
 		panic(err)
 	}
+	defer func() {
+		_ = rows.Close()
+		_ = rows.Err()
+	}()
 	for rows.Next() {
 		var m collector.Metrics
 		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
@@ -102,7 +106,7 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 	}
 	mm := ss.ServerHandler.MetricMap()
 	allSaved := false
-	counter := 100
+	counter := 10
 	for !allSaved {
 		allSaved = true
 		for _, val := range mm {
