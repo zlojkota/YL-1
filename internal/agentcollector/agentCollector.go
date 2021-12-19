@@ -13,7 +13,7 @@ import (
 	"github.com/zlojkota/YL-1/internal/collector"
 )
 
-//const serverAddr = "http://localhost:8080"
+const srvAddr = "http://localhost:8080"
 const counter = "counter"
 const gauge = "gauge"
 
@@ -34,9 +34,9 @@ func (p *Agent) SetHasher(key string) {
 func (p *Agent) InitAgentPTX(agentCollector AgentCollector, serverAddr string) {
 	p.agentCollector = agentCollector
 	if len(serverAddr) == 0 {
-		p.serverAddr = "http://localhost:8080"
+		p.serverAddr = srvAddr
 	} else {
-		p.serverAddr = fmt.Sprintf("http://%s", serverAddr)
+		p.serverAddr = fmt.Sprintf("http://%s", srvAddr)
 	}
 	p.sendJSON = false
 }
