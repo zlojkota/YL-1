@@ -3,7 +3,6 @@ package serverhandlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/collector"
@@ -179,7 +178,6 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 }
 
 func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
-
 	var updateValue []*collector.Metrics
 	switch c.Request().Header.Get("Content-Type") {
 	case "application/json":
@@ -196,13 +194,13 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 	value := make(map[string]*collector.Metrics)
 	for _, val := range updateValue {
 		if v, ok := h.State.MetricMapItem(val.ID); ok && v.MType == counter {
-			d, _ := h.State.MetricMapItem(val.ID)
-			delta := *d.Delta + *val.Delta
+			delta := *v.Delta + *val.Delta
 			val.Delta = &delta
+			val.Hash = h.State.GetHaser().Hash(val)
 		}
 		value[val.ID] = val
+
 	}
-	fmt.Println("RECIVED BATCH!!!!!!!!!!!!!!!")
 	h.State.SetMetricMap(value)
 	return c.NoContent(http.StatusOK)
 }
