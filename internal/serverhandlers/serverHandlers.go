@@ -92,7 +92,7 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 			if !ok {
 				return c.NoContent(http.StatusNotFound)
 			}
-			return c.String(http.StatusOK, strconv.FormatInt(*val.Delta, 10))
+			return c.String(http.StatusOK, strconv.FormatUint(*val.Delta, 10))
 		case gauge:
 			val, ok := h.State.MetricMapItem(c.Param("metric"))
 			if !ok {
@@ -122,7 +122,7 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		updateValue.MType = c.Param("type")
 		switch c.Param("type") {
 		case counter:
-			val, err := strconv.ParseInt(c.Param("value"), 0, 64)
+			val, err := strconv.ParseUint(c.Param("value"), 0, 64)
 			if err != nil {
 				return c.NoContent(http.StatusBadRequest)
 			}

@@ -47,7 +47,7 @@ func (hsh *Hasher) HashG(id string, val float64) string {
 	return hsh.hash(fmt.Sprintf("%s:gauge:%f", id, val))
 }
 
-func (hsh *Hasher) HashC(id string, val int64) string {
+func (hsh *Hasher) HashC(id string, val uint64) string {
 	return hsh.hash(fmt.Sprintf("%s:counter:%d", id, val))
 }
 

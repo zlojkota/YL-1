@@ -11,7 +11,7 @@ import (
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Delta *uint64  `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 	Hash  string   `json:"hash,omitempty"`  // значение хеш-функции
 
@@ -26,7 +26,7 @@ type Collector struct {
 	poolinterval time.Duration
 	Done         chan bool
 	Metrics      []*Metrics
-	counter      int64
+	counter      uint64
 	randomvalue  float64
 	rtm          runtime.MemStats
 	rtmFloat     map[string]*float64

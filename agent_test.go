@@ -33,7 +33,9 @@ func (p *Worker) RequestSend(req *http.Request) {
 		val := req.Header.Get("Content-Type")
 		if val == "application/json" {
 			if assert.NoError(p.t, p.h.UpdateHandler(c)) {
-				assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Post update application/json")
+				if req.URL.Path == "/update/" {
+					assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Post update application/json")
+				}
 			}
 		} else {
 			c.SetPath("/update/:type/:metric/:value")
@@ -82,10 +84,10 @@ func TestAllapp(t *testing.T) {
 	t.Run("Check update value", func(t *testing.T) {
 		var (
 			oldMapGauge   map[string]float64
-			oldMapCounter map[string]int64
+			oldMapCounter map[string]uint64
 		)
 		oldMapGauge = make(map[string]float64)
-		oldMapCounter = make(map[string]int64)
+		oldMapCounter = make(map[string]uint64)
 
 		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
@@ -97,7 +99,7 @@ func TestAllapp(t *testing.T) {
 		for loop {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
-			newMapCounter := make(map[string]int64)
+			newMapCounter := make(map[string]uint64)
 			mm := worker.h.State.MetricMap()
 			worker.h.State.MetricMapMuxLock()
 			for _, val := range mm {
@@ -140,10 +142,10 @@ func TestAllapp(t *testing.T) {
 	t.Run("Check Not update value", func(t *testing.T) {
 		var (
 			oldMapGauge   map[string]float64
-			oldMapCounter map[string]int64
+			oldMapCounter map[string]uint64
 		)
 		oldMapGauge = make(map[string]float64)
-		oldMapCounter = make(map[string]int64)
+		oldMapCounter = make(map[string]uint64)
 
 		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
@@ -155,7 +157,7 @@ func TestAllapp(t *testing.T) {
 		for loop {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
-			newMapCounter := make(map[string]int64)
+			newMapCounter := make(map[string]uint64)
 			mm := worker.h.State.MetricMap()
 			for _, val := range mm {
 				switch val.MType {

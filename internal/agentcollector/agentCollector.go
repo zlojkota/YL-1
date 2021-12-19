@@ -94,7 +94,7 @@ func (p *Agent) MakeRequestPLTX(metrics *collector.Metrics) (*http.Request, erro
 	var strVal string
 	switch metrics.MType {
 	case counter:
-		strVal = strconv.FormatInt(*metrics.Delta, 10)
+		strVal = strconv.FormatUint(*metrics.Delta, 10)
 	case gauge:
 		strVal = strconv.FormatFloat(*metrics.Value, 'f', -1, 64)
 	}
