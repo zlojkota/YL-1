@@ -15,7 +15,6 @@ type DataBaseStorageState struct {
 	Done          chan bool
 	db            *sql.DB
 	store         string
-	stopped       bool
 }
 
 func (ss DataBaseStorageState) SendDone() {
@@ -23,10 +22,7 @@ func (ss DataBaseStorageState) SendDone() {
 }
 
 func (ss DataBaseStorageState) WaitDone() {
-	if !ss.stopped {
-		<-ss.Done
-		ss.stopped = true
-	}
+	<-ss.Done
 }
 
 func (ss DataBaseStorageState) Ping() bool {
@@ -50,7 +46,6 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 		panic(err)
 	}
 	ss.store = store
-	ss.stopped = false
 }
 
 func (ss *DataBaseStorageState) Restore() {
@@ -81,7 +76,6 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 		case <-ss.Done:
 			ss.SaveToStorageLast()
 			ss.Done <- true
-			ss.stopped = true
 			return
 		case <-tick.C:
 			ss.SaveToStorage()
@@ -112,7 +106,7 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 	}
 	mm := ss.ServerHandler.MetricMap()
 	allSaved := false
-	counter := 10
+	counter := 100
 	for !allSaved {
 		allSaved = true
 		for _, val := range mm {
@@ -135,8 +129,8 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 		if counter == 0 {
 			log.Error("Dont Save data.")
 			allSaved = true
-			ss.Done <- true
 		}
+		counter--
 	}
 	if counter != 0 {
 		log.Info("Saved last Data to DB")
@@ -145,5 +139,4 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 	log.Info("Primary DB connection close")
 	dbLast.Close()
 	log.Info("Testing DB connection close")
-	ss.stopped = true
 }
