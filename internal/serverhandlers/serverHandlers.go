@@ -164,7 +164,6 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			Delta: &delta,
 			Hash:  h.State.GetHaser().HashC(updateValue.ID, delta),
 		})
-
 		return c.NoContent(http.StatusOK)
 	case gauge:
 		h.State.SetMetricMapItem(&collector.Metrics{
@@ -196,6 +195,11 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 	}
 	value := make(map[string]*collector.Metrics)
 	for _, val := range updateValue {
+		if v, ok := h.State.MetricMapItem(val.ID); ok && v.MType == counter {
+			d, _ := h.State.MetricMapItem(val.ID)
+			delta := *d.Delta + *val.Delta
+			val.Delta = &delta
+		}
 		value[val.ID] = val
 	}
 	fmt.Println("RECIVED BATCH!!!!!!!!!!!!!!!")
