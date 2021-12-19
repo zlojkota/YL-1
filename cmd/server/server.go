@@ -113,6 +113,7 @@ func main() {
 	// update Handler
 	e.POST("/update/:type/:metric/:value", handler.UpdateHandler)
 	e.POST("/update/", handler.UpdateHandler)
+	e.POST("/updates/", handler.UpdateBATCHHandler)
 
 	// homePage Handler
 	e.GET("/", handler.MainHandler)

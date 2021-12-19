@@ -18,14 +18,14 @@ type Metrics struct {
 }
 
 type CollectorHandle interface {
-	MakeRequest(metrics *[]Metrics)
+	MakeRequest(metrics []*Metrics)
 }
 
 type Collector struct {
 	handle       CollectorHandle
 	poolinterval time.Duration
 	Done         chan bool
-	Metrics      []Metrics
+	Metrics      []*Metrics
 	counter      int64
 	randomvalue  float64
 	rtm          runtime.MemStats
@@ -37,12 +37,12 @@ func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle)
 	col.handle = handle
 	col.Done = make(chan bool)
 	col.rtmFloat = make(map[string]*float64)
-	col.Metrics = append(col.Metrics, Metrics{
+	col.Metrics = append(col.Metrics, &Metrics{
 		ID:    "PollCount",
 		MType: "counter",
 		Delta: &col.counter,
 	})
-	col.Metrics = append(col.Metrics, Metrics{
+	col.Metrics = append(col.Metrics, &Metrics{
 		ID:    "RandomValue",
 		MType: "gauge",
 		Value: &col.randomvalue,
@@ -62,7 +62,7 @@ func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle)
 			continue
 		}
 		col.rtmFloat[ref.Type().Field(i).Name] = temp
-		col.Metrics = append(col.Metrics, Metrics{
+		col.Metrics = append(col.Metrics, &Metrics{
 			ID:    ref.Type().Field(i).Name,
 			MType: "gauge",
 			Value: temp,
@@ -104,7 +104,7 @@ func (col *Collector) Run() {
 			if col.handle == nil {
 				log.Println(col.Metrics)
 			} else {
-				col.handle.MakeRequest(&col.Metrics)
+				col.handle.MakeRequest(col.Metrics)
 			}
 		}
 		col.counter++

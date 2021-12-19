@@ -58,3 +58,13 @@ func (hsh *Hasher) TestHash(src *collector.Metrics) bool {
 		return false
 	}
 }
+
+func (hsh *Hasher) TestBatchHash(src []*collector.Metrics) bool {
+	ret := true
+	for _, val := range src {
+		if hsh.Hash(val) != val.Hash {
+			ret = false
+		}
+	}
+	return ret
+}

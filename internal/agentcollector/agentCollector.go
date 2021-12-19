@@ -51,13 +51,9 @@ func (p *Agent) InitAgentJSON(agentCollector AgentCollector, serverAddr string) 
 	p.sendJSON = true
 }
 
-func (p *Agent) MakeRequestJSON(metrics collector.Metrics) (*http.Request, error) {
-	switch metrics.MType {
-	case counter:
-		metrics.Hash = p.hasher.Hash(&metrics)
-	case gauge:
-		metrics.Hash = p.hasher.Hash(&metrics)
-	}
+func (p *Agent) MakeRequestJSON(metrics *collector.Metrics) (*http.Request, error) {
+
+	metrics.Hash = p.hasher.Hash(metrics)
 	jsonData, errEnc := json.Marshal(metrics)
 	if errEnc != nil {
 		return nil, errEnc
@@ -73,7 +69,28 @@ func (p *Agent) MakeRequestJSON(metrics collector.Metrics) (*http.Request, error
 	return req, nil
 }
 
-func (p *Agent) MakeRequestPLTX(metrics collector.Metrics) (*http.Request, error) {
+func (p *Agent) MakeRequestJSONBatch(metrics []*collector.Metrics) (*http.Request, error) {
+
+	for _, val := range metrics {
+		val.Hash = p.hasher.Hash(val)
+	}
+
+	jsonData, errEnc := json.Marshal(metrics)
+	if errEnc != nil {
+		return nil, errEnc
+	}
+	url := fmt.Sprintf("%s/updates/", p.serverAddr)
+	body := bytes.NewReader(jsonData)
+	req, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = make(http.Header)
+	req.Header.Set("Content-Type", "application/json")
+	return req, nil
+}
+
+func (p *Agent) MakeRequestPLTX(metrics *collector.Metrics) (*http.Request, error) {
 	var strVal string
 	switch metrics.MType {
 	case counter:
@@ -93,29 +110,36 @@ func (p *Agent) MakeRequestPLTX(metrics collector.Metrics) (*http.Request, error
 	return req, nil
 }
 
-func (p *Agent) MakeRequest(metrics *[]collector.Metrics) {
+func (p *Agent) MakeRequest(metrics []*collector.Metrics) {
 	if p.agentCollector == nil {
 		log.Error("No AgentCollector Init!")
 		return
 	}
-	//p.sendJSON = !p.sendJSON
-	if p.sendJSON {
-		for _, val := range *metrics {
-			req, err := p.MakeRequestJSON(val)
+	for _, val := range metrics {
+		var (
+			req *http.Request
+			err error
+		)
+		if p.sendJSON {
+			req, err = p.MakeRequestJSON(val)
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			p.agentCollector.RequestSend(req)
-		}
-	} else {
-		for _, val := range *metrics {
-			req, err := p.MakeRequestPLTX(val)
+		} else {
+			req, err = p.MakeRequestPLTX(val)
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			p.agentCollector.RequestSend(req)
 		}
+		p.agentCollector.RequestSend(req)
 	}
+
+	req, err := p.MakeRequestJSONBatch(metrics)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	p.agentCollector.RequestSend(req)
 }
