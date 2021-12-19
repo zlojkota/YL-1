@@ -170,15 +170,13 @@ func (h *ServerHandler) UpdateBATCHHandler(c echo.Context) error {
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
-	value := make(map[string]*collector.Metrics)
 	for _, val := range updateValue {
 		if v, ok := h.State.MetricMapItem(val.ID); ok && v.MType == counter {
 			delta := *v.Delta + *val.Delta
 			val.Delta = &delta
 			val.Hash = h.State.GetHaser().Hash(val)
 		}
-		value[val.ID] = val
+		h.State.SetMetricMapItem(val)
 	}
-	h.State.SetMetricMap(value)
 	return c.NoContent(http.StatusOK)
 }
