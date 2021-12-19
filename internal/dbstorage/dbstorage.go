@@ -2,8 +2,6 @@ package dbstorage
 
 import (
 	"database/sql"
-	"encoding/json"
-	"fmt"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"github.com/zlojkota/YL-1/internal/hashhelper"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
@@ -73,9 +71,6 @@ func (ss *DataBaseStorageState) Restore() {
 		if err != nil {
 			log.Error(err)
 		}
-		mmj, _ := json.Marshal(m)
-		fmt.Println(string(mmj))
-
 		ss.state.SetMetricMapItem(&m)
 	}
 }

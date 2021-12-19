@@ -113,7 +113,6 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		c.Param("metric") != "" &&
 		c.Param("value") != "" &&
 		c.Param("type") != "" {
-
 		contentType = "text/plain"
 	}
 
@@ -144,14 +143,18 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		if err != nil {
 			return c.NoContent(http.StatusNotImplemented)
 		}
+		mmj, _ := json.Marshal(updateValue)
+		fmt.Println("-REQUEST-", string(mmj))
 		if !h.State.GetHaser().TestHash(&updateValue) {
-			fmt.Println("------Hash mismatch------")
 			return c.NoContent(http.StatusBadRequest)
 		}
 	default:
 		return c.NoContent(http.StatusNotImplemented)
 	}
 	if _, ok := h.State.MetricMapItem(updateValue.ID); !ok {
+		updateValue.Hash = h.State.GetHaser().Hash(&updateValue)
+		mmj, _ := json.Marshal(updateValue)
+		fmt.Println("-INSERT_DATA-", string(mmj))
 		h.State.SetMetricMapItem(&updateValue)
 		return c.NoContent(http.StatusOK)
 	}
@@ -165,6 +168,9 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			Delta: &delta,
 			Hash:  h.State.GetHaser().HashC(updateValue.ID, delta),
 		})
+		r, _ := h.State.MetricMapItem(updateValue.ID)
+		mmj, _ := json.Marshal(r)
+		fmt.Println("-UPDATE_DATA-", string(mmj))
 		return c.NoContent(http.StatusOK)
 	case gauge:
 		h.State.SetMetricMapItem(&collector.Metrics{
