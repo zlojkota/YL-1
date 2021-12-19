@@ -138,6 +138,7 @@ func main() {
 		syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
+		syscall.SIGKILL,
 		syscall.SIGQUIT)
 	go func() {
 		<-sigChan
