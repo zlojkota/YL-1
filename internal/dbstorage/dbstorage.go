@@ -15,6 +15,7 @@ type DataBaseStorageState struct {
 	Done          chan bool
 	db            *sql.DB
 	store         string
+	stopped       bool
 }
 
 func (ss DataBaseStorageState) SendDone() {
@@ -22,7 +23,10 @@ func (ss DataBaseStorageState) SendDone() {
 }
 
 func (ss DataBaseStorageState) WaitDone() {
-	<-ss.Done
+	if !ss.stopped {
+		<-ss.Done
+		ss.stopped = true
+	}
 }
 
 func (ss DataBaseStorageState) Ping() bool {
@@ -46,6 +50,7 @@ func (ss *DataBaseStorageState) Init(serverHandler *serverhandlers.ServerHandler
 		panic(err)
 	}
 	ss.store = store
+	ss.stopped = false
 }
 
 func (ss *DataBaseStorageState) Restore() {
@@ -76,6 +81,7 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 		case <-ss.Done:
 			ss.SaveToStorageLast()
 			ss.Done <- true
+			ss.stopped = true
 			return
 		case <-tick.C:
 			ss.SaveToStorage()
