@@ -85,13 +85,6 @@ func main() {
 		helperNew.Init(*cfg.DatabaseDsn)
 		helper = helperNew
 
-		/////////////////////
-		//var stater memorystate.MemoryState
-		//stater.InitHasher(*cfg.HashKey)
-		//handler.Init(&stater)
-		//helper.SetState(&stater)
-		/////////////////////
-
 		helperNew.InitHasher(*cfg.HashKey)
 		handler.Init(helperNew)
 		helper.SetState(helperNew)
@@ -139,7 +132,6 @@ func main() {
 		syscall.SIGHUP,
 		syscall.SIGINT,
 		syscall.SIGTERM,
-		syscall.SIGKILL,
 		syscall.SIGQUIT)
 	go func() {
 		<-sigChan
