@@ -115,26 +115,26 @@ func (p *Agent) MakeRequest(metrics []*collector.Metrics) {
 		log.Error("No AgentCollector Init!")
 		return
 	}
-	for _, val := range metrics {
-		var (
-			req *http.Request
-			err error
-		)
-		if p.sendJSON {
-			req, err = p.MakeRequestJSON(val)
-			if err != nil {
-				log.Error(err)
-				return
-			}
-		} else {
-			req, err = p.MakeRequestPLTX(val)
-			if err != nil {
-				log.Error(err)
-				return
-			}
-		}
-		p.agentCollector.RequestSend(req)
-	}
+	//for _, val := range metrics {
+	//	var (
+	//		req *http.Request
+	//		err error
+	//	)
+	//	if p.sendJSON {
+	//		req, err = p.MakeRequestJSON(val)
+	//		if err != nil {
+	//			log.Error(err)
+	//			return
+	//		}
+	//	} else {
+	//		req, err = p.MakeRequestPLTX(val)
+	//		if err != nil {
+	//			log.Error(err)
+	//			return
+	//		}
+	//	}
+	//	p.agentCollector.RequestSend(req)
+	//}
 
 	req, err := p.MakeRequestJSONBatch(metrics)
 	if err != nil {
