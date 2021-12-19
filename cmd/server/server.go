@@ -85,16 +85,16 @@ func main() {
 		helperNew.Init(*cfg.DatabaseDsn)
 		helper = helperNew
 
-		///////////////////
-		var stater memorystate.MemoryState
-		stater.InitHasher(*cfg.HashKey)
-		handler.Init(&stater)
-		helper.SetState(&stater)
-		///////////////////
+		/////////////////////
+		//var stater memorystate.MemoryState
+		//stater.InitHasher(*cfg.HashKey)
+		//handler.Init(&stater)
+		//helper.SetState(&stater)
+		/////////////////////
 
-		//helperNew.InitHasher(*cfg.HashKey)
-		//handler.Init(helperNew)
-		//helper.SetState(helperNew)
+		helperNew.InitHasher(*cfg.HashKey)
+		handler.Init(helperNew)
+		helper.SetState(helperNew)
 
 	} else {
 		var stater memorystate.MemoryState
@@ -129,7 +129,7 @@ func main() {
 		return c.NoContent(http.StatusInternalServerError)
 	})
 
-	if *cfg.Restore {
+	if *cfg.Restore && *cfg.DatabaseDsn == "" {
 		helper.Restore()
 	}
 
@@ -153,11 +153,17 @@ func main() {
 		log.Info("Stopping Storage...")
 	}()
 
-	go helper.Run(*cfg.StoreInterval)
+	if *cfg.DatabaseDsn == "" {
+		go helper.Run(*cfg.StoreInterval)
+	}
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}
-	helper.WaitDone()
-	log.Info("Storage stopped.")
+	if *cfg.DatabaseDsn == "" {
+		helper.WaitDone()
+		log.Info("Storage stopped.")
+	} else {
+		helper.StopStorage()
+	}
 	log.Info("All STOPPED. BYE!")
 }

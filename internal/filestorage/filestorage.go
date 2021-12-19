@@ -23,6 +23,9 @@ func (ss *FileStorageState) WaitDone() {
 	<-ss.Done
 }
 
+func (ss *FileStorageState) StopStorage() {
+	ss.Done <- true
+}
 func (ss *FileStorageState) Ping() bool {
 	return false
 }
@@ -97,5 +100,4 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 			}(file)
 		}
 	}
-
 }

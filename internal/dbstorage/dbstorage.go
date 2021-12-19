@@ -15,12 +15,10 @@ import (
 )
 
 type DataBaseStorageState struct {
-	Done  chan bool
-	db    *sql.DB
-	store string
-	state serverhandlers.Stater
-
-	metricMap    map[string]*collector.Metrics
+	Done         chan bool
+	db           *sql.DB
+	store        string
+	state        serverhandlers.Stater
 	metricMapMux sync.Mutex
 	Hasher       *hashhelper.Hasher
 }
@@ -166,36 +164,85 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 }
 
 func (ss *DataBaseStorageState) MetricMapMuxLock() {
-
+	ss.metricMapMux.Lock()
 }
 
 func (ss *DataBaseStorageState) MetricMapMuxUnlock() {
-
+	ss.metricMapMux.Unlock()
 }
 
 func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
+	var ret map[string]*collector.Metrics
+	ret = make(map[string]*collector.Metrics)
 
-	return nil
+	rows, err := ss.db.Query("SELECT * FROM metrics")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		_ = rows.Close()
+		_ = rows.Err()
+	}()
+	for rows.Next() {
+		var m collector.Metrics
+		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
+		if err != nil {
+			log.Error(err)
+		}
+		ret[m.ID] = &m
+	}
+	return ret
 }
 
 func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Metrics) {
 
+	if len(metricMap) != 0 {
+		for _, val := range metricMap {
+			var cnt int
+			ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+			if cnt == 0 {
+				ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+			} else {
+				ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+			}
+		}
+	}
 }
 
 func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, bool) {
-	return nil, false
+	var cnt int
+	ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 ", item).Scan(&cnt)
+	if cnt == 0 {
+		return nil, false
+	} else {
+		var val collector.Metrics
+		ss.db.QueryRow("SELECT * FROM metrics WHERE id=$1", item).Scan(&val.ID, &val.MType, &val.Delta, &val.Value, &val.Hash)
+		val.Hash = ss.state.GetHaser().Hash(&val)
+		return &val, true
+	}
 }
 
 func (ss *DataBaseStorageState) SetMetricMapItem(metricMap *collector.Metrics) {
-
+	var cnt int
+	ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", metricMap.ID, metricMap.MType).Scan(&cnt)
+	if cnt == 0 {
+		ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", metricMap.ID, metricMap.MType, metricMap.Delta, metricMap.Value, metricMap.Hash)
+	} else {
+		ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", metricMap.Delta, metricMap.Value, metricMap.Hash, metricMap.ID, metricMap.MType)
+	}
 }
 
 func (ss *DataBaseStorageState) GetHaser() *hashhelper.Hasher {
-	return nil
+	return ss.Hasher
 }
 
 func (ss *DataBaseStorageState) InitHasher(hashKey string) {
 	ss.Hasher = &hashhelper.Hasher{
 		Key: hashKey,
 	}
+}
+
+func (ss *DataBaseStorageState) StopStorage() {
+	ss.db.Close()
+	log.Info("Primary DB connection close")
 }

@@ -33,6 +33,7 @@ type Storager interface {
 	Init(store string)
 	SetState(state Stater)
 	Ping() bool
+	StopStorage()
 }
 
 type ServerHandler struct {
