@@ -3,6 +3,7 @@ package serverhandlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/collector"
@@ -142,6 +143,8 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 		if err != nil {
 			return c.NoContent(http.StatusNotImplemented)
 		}
+		mmj, _ := json.Marshal(updateValue)
+		fmt.Println("-REQUEST-", string(mmj))
 		if !h.State.GetHaser().TestHash(&updateValue) {
 			return c.NoContent(http.StatusBadRequest)
 		}
@@ -150,6 +153,8 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 	}
 	if _, ok := h.State.MetricMapItem(updateValue.ID); !ok {
 		updateValue.Hash = h.State.GetHaser().Hash(&updateValue)
+		mmj, _ := json.Marshal(updateValue)
+		fmt.Println("-INSERT_DATA-", string(mmj))
 		h.State.SetMetricMapItem(&updateValue)
 		return c.NoContent(http.StatusOK)
 	}
@@ -163,6 +168,9 @@ func (h *ServerHandler) UpdateHandler(c echo.Context) error {
 			Delta: &delta,
 			Hash:  h.State.GetHaser().HashC(updateValue.ID, delta),
 		})
+		r, _ := h.State.MetricMapItem(updateValue.ID)
+		mmj, _ := json.Marshal(r)
+		fmt.Println("-UPDATE_DATA-", string(mmj))
 		return c.NoContent(http.StatusOK)
 	case gauge:
 		h.State.SetMetricMapItem(&collector.Metrics{
