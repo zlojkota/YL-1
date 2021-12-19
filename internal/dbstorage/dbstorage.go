@@ -145,4 +145,5 @@ func (ss DataBaseStorageState) SaveToStorageLast() {
 	log.Info("Primary DB connection close")
 	dbLast.Close()
 	log.Info("Testing DB connection close")
+	ss.stopped = true
 }
