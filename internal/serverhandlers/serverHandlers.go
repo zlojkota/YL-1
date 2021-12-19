@@ -94,6 +94,7 @@ func (h *ServerHandler) GetHandler(c echo.Context) error {
 			return c.NoContent(http.StatusNotImplemented)
 		}
 		if val, ok := h.MetricMapItem(data.ID); ok {
+			val.Hash = h.hasher.Hash(val)
 			return c.JSON(http.StatusOK, val)
 		} else {
 			return c.NoContent(http.StatusNotFound)
