@@ -1,6 +1,7 @@
 package yl1
 
 import (
+	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/memorystate"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +15,7 @@ import (
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 )
 
-const iterations = 20
+const iterations = 200
 
 type Worker struct {
 	t *testing.T
@@ -32,14 +33,14 @@ func (p *Worker) RequestSend(req *http.Request) {
 		// Assertions
 		val := req.Header.Get("Content-Type")
 		if val == "application/json" {
-			if assert.NoError(p.t, p.h.UpdateHandler(c)) {
+			if assert.NoError(p.t, p.h.UpdateBATCHHandler(c), "Error application/json") {
 				if req.URL.Path == "/update/" {
 					assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Post update application/json")
 				}
 			}
 		} else {
 			c.SetPath("/update/:type/:metric/:value")
-			if assert.NoError(p.t, p.h.UpdateHandler(c)) {
+			if assert.NoError(p.t, p.h.UpdateHandler(c), "Error plain/text") {
 				assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Get update text/plain")
 			}
 		}
@@ -60,6 +61,7 @@ func (p *Worker) InitWorker(t *testing.T) {
 	// update Handler
 	p.e.POST("/update/:type/:metric/:value", p.h.UpdateHandler)
 	p.e.POST("/update/", p.h.UpdateHandler)
+	p.e.POST("/updates/", p.h.UpdateBATCHHandler)
 
 	// homePage Handler
 	p.e.GET("/", p.h.MainHandler)
@@ -102,6 +104,8 @@ func TestAllapp(t *testing.T) {
 			newMapCounter := make(map[string]uint64)
 			mm := worker.h.State.MetricMap()
 			worker.h.State.MetricMapMuxLock()
+			log.Error("tick", iter)
+			log.Error(len(mm))
 			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
@@ -109,6 +113,7 @@ func TestAllapp(t *testing.T) {
 				case "counter":
 					newMapCounter[val.ID] = *val.Delta
 				}
+				log.Error("new map")
 			}
 			worker.h.State.MetricMapMuxUnlock()
 			if iter == 0 {
@@ -116,12 +121,14 @@ func TestAllapp(t *testing.T) {
 				loop = false
 			} else if iter != iterations {
 				for key, val := range newMapCounter {
+					log.Error("counter")
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
 						updatedCounter = true
 					}
 				}
 				for key, val := range newMapGauge {
+					log.Error("gauge")
 					oldVal, ok := oldMapGauge[key]
 					if val != oldVal && ok {
 						updatedGauge = true
