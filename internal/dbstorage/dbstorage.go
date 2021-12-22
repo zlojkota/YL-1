@@ -243,12 +243,30 @@ func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Met
 			var cnt int
 			err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
 			if err != nil {
+				log.Error(err)
 				return
 			}
-			if cnt == 0 {
-				ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
-			} else {
-				ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+			dontSaved := false
+			savedCounter := 100
+			for dontSaved {
+				if cnt == 0 {
+					ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+				} else {
+					ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+				}
+				var cntSaved int
+				err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND ((delta is null and val=$3) or (delta=$4 and val is null)) AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cntSaved)
+				if err != nil {
+					log.Error(err)
+				}
+				if cntSaved != 0 {
+					dontSaved = false
+				}
+				if savedCounter == 0 {
+					dontSaved = false
+					log.Error("metri not saved:", val)
+				}
+				savedCounter--
 			}
 		}
 	}
@@ -279,10 +297,27 @@ func (ss *DataBaseStorageState) SetMetricMapItem(metricMap *collector.Metrics) {
 	if err != nil {
 		return
 	}
-	if cnt == 0 {
-		ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", metricMap.ID, metricMap.MType, metricMap.Delta, metricMap.Value, metricMap.Hash)
-	} else {
-		ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", metricMap.Delta, metricMap.Value, metricMap.Hash, metricMap.ID, metricMap.MType)
+	dontSaved := false
+	savedCounter := 100
+	for dontSaved {
+		if cnt == 0 {
+			ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", metricMap.ID, metricMap.MType, metricMap.Delta, metricMap.Value, metricMap.Hash)
+		} else {
+			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", metricMap.Delta, metricMap.Value, metricMap.Hash, metricMap.ID, metricMap.MType)
+		}
+		var cntSaved int
+		err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND ((delta is null and val=$3) or (delta=$4 and val is null)) AND hash=$5", metricMap.ID, metricMap.MType, metricMap.Value, metricMap.Delta, metricMap.Hash).Scan(&cntSaved)
+		if err != nil {
+			log.Error(err)
+		}
+		if cntSaved != 0 {
+			dontSaved = false
+		}
+		if savedCounter == 0 {
+			dontSaved = false
+			log.Error("metri not saved:", metricMap)
+		}
+		savedCounter--
 	}
 }
 
