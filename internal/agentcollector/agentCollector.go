@@ -3,6 +3,7 @@ package agentcollector
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -94,8 +95,14 @@ func (p *Agent) MakeRequestPLTX(metrics *collector.Metrics) (*http.Request, erro
 	var strVal string
 	switch metrics.MType {
 	case counter:
+		if metrics.Delta == nil {
+			return nil, errors.New("NIL counter value")
+		}
 		strVal = strconv.FormatUint(*metrics.Delta, 10)
 	case gauge:
+		if metrics.Value == nil {
+			return nil, errors.New("NIL gauge value")
+		}
 		strVal = strconv.FormatFloat(*metrics.Value, 'f', -1, 64)
 	}
 	url := fmt.Sprintf("%s/update/%s/%s/%s", p.serverAddr, metrics.MType, metrics.ID, strVal)
