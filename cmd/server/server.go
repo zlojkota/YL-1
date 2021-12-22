@@ -67,7 +67,7 @@ func main() {
 		_ = flag.String("d", "", "DATABASE_DSN")
 	}
 	flag.Parse()
-
+	*cfg.DatabaseDsn == ""
 	isDBNotAvailable := *cfg.DatabaseDsn == ""
 
 	e := echo.New()
