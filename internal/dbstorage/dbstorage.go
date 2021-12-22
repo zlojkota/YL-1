@@ -95,6 +95,7 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 	for {
 		select {
 		case <-ss.Done:
+			log.Info("Saving data and stopping db")
 			ss.SaveToStorageLast()
 			ss.SendFinish()
 			return

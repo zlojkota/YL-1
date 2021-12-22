@@ -77,6 +77,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 	for {
 		select {
 		case <-ss.Done:
+			log.Info("Saving data to file.")
 			file, err := os.Create(ss.store)
 			if err != nil {
 				log.Error(err)

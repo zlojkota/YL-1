@@ -155,7 +155,7 @@ func main() {
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}
-	if isDBNotAvailable {
+	if !isDBNotAvailable {
 		storager.WaitFinish()
 		log.Info("Storage stopped.")
 	} else {
