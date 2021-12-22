@@ -33,9 +33,9 @@ func (ss *DataBaseStorageState) Ping() bool {
 	if err := ss.db.Ping(); err != nil {
 		log.Error(err)
 		return false
-	} else {
-		return true
 	}
+
+	return true
 }
 
 func (ss *DataBaseStorageState) Init(store string) {
@@ -61,15 +61,14 @@ func (ss *DataBaseStorageState) Restore() {
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		_ = rows.Close()
-		_ = rows.Err()
-	}()
+	//goland:noinspection GoUnhandledErrorResult
+	defer rows.Close()
 	for rows.Next() {
 		var m collector.Metrics
 		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 		if err != nil {
 			log.Error(err)
+			continue
 		}
 		ss.state.SetMetricMapItem(&m)
 	}
@@ -96,11 +95,21 @@ func (ss *DataBaseStorageState) SaveToStorage() {
 	mm := ss.state.MetricMap()
 	for _, val := range mm {
 		var cnt int
-		ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+		err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+		if err != nil {
+			log.Error(err)
+			return
+		}
 		if cnt == 0 {
-			ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+			_, err := ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+			if err != nil {
+				log.Error(err)
+			}
 		} else {
-			ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+			_, err := ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+			if err != nil {
+				log.Error(err)
+			}
 		}
 	}
 }
@@ -113,21 +122,35 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 	}
 	mm := ss.state.MetricMap()
 	allSaved := false
-	counter := 100
+	saveAttemptsCounter := 100
 	for !allSaved {
 		allSaved = true
 		for _, val := range mm {
 			var cnt int
-			ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+			err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+			if err != nil {
+				log.Error(err)
+				return
+			}
 			if cnt == 0 {
-				ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+				_, err := ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
+				if err != nil {
+					log.Error(err)
+				}
 			} else {
-				ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+				_, err := ss.db.Exec("UPDATE metrics set delta=$1, val=$2,hash=$3 where id=$4 AND mtype=$5", val.Delta, val.Value, val.Hash, val.ID, val.MType)
+				if err != nil {
+					log.Error(err)
+				}
 			}
 		}
 		for _, val := range mm {
 			var cnt int
-			dbLast.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND ((delta is null and val=$3) or (delta=$4 and val is null)) AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cnt)
+			err := dbLast.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND ((delta is null and val=$3) or (delta=$4 and val is null)) AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cnt)
+			if err != nil {
+				log.Error(err)
+				return
+			}
 			if cnt == 0 {
 				allSaved = false
 			}
@@ -135,26 +158,35 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 		if !allSaved {
 			log.Info("Wait save...")
 			log.Info("reconnect to DB...")
-			ss.db.Close()
-			var err error
+			err := ss.db.Close()
+			if err != nil {
+				return
+			}
 			ss.db, err = sql.Open("pgx", ss.store)
 			if err != nil {
 				log.Error(err)
 			}
 		}
-		if counter == 0 {
-			log.Error("Dont Save data.")
+		if saveAttemptsCounter == 0 {
+			log.Error("Dont Save data. DB Error.")
 			allSaved = true
 		} else {
-			counter--
+			saveAttemptsCounter--
 		}
 	}
-	if counter != 0 {
+	if saveAttemptsCounter != 0 {
 		log.Info("Saved last Data to DB")
 	}
-	ss.db.Close()
+	err = ss.db.Close()
+	if err != nil {
+		return
+	}
 	log.Info("Primary DB connection close")
-	dbLast.Close()
+	err = dbLast.Close()
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	log.Info("Testing DB connection close")
 }
 
@@ -183,6 +215,7 @@ func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
 		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 		if err != nil {
 			log.Error(err)
+			continue
 		}
 		ret[m.ID] = &m
 	}
@@ -194,7 +227,10 @@ func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Met
 	if len(metricMap) != 0 {
 		for _, val := range metricMap {
 			var cnt int
-			ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+			err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
+			if err != nil {
+				return
+			}
 			if cnt == 0 {
 				ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
 			} else {
@@ -206,12 +242,18 @@ func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Met
 
 func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, bool) {
 	var cnt int
-	ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 ", item).Scan(&cnt)
+	err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 ", item).Scan(&cnt)
+	if err != nil {
+		return nil, false
+	}
 	if cnt == 0 {
 		return nil, false
 	} else {
 		var val collector.Metrics
-		ss.db.QueryRow("SELECT * FROM metrics WHERE id=$1", item).Scan(&val.ID, &val.MType, &val.Delta, &val.Value, &val.Hash)
+		err := ss.db.QueryRow("SELECT * FROM metrics WHERE id=$1", item).Scan(&val.ID, &val.MType, &val.Delta, &val.Value, &val.Hash)
+		if err != nil {
+			return nil, false
+		}
 		val.Hash = ss.state.GetHaser().Hash(&val)
 		return &val, true
 	}
@@ -219,7 +261,10 @@ func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, 
 
 func (ss *DataBaseStorageState) SetMetricMapItem(metricMap *collector.Metrics) {
 	var cnt int
-	ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", metricMap.ID, metricMap.MType).Scan(&cnt)
+	err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", metricMap.ID, metricMap.MType).Scan(&cnt)
+	if err != nil {
+		return
+	}
 	if cnt == 0 {
 		ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", metricMap.ID, metricMap.MType, metricMap.Delta, metricMap.Value, metricMap.Hash)
 	} else {
@@ -238,6 +283,10 @@ func (ss *DataBaseStorageState) InitHasher(hashKey string) {
 }
 
 func (ss *DataBaseStorageState) StopStorage() {
-	ss.db.Close()
+	err := ss.db.Close()
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	log.Info("Primary DB connection close")
 }

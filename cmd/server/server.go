@@ -68,6 +68,8 @@ func main() {
 	}
 	flag.Parse()
 
+	isDBNotAvailable := *cfg.DatabaseDsn == ""
+
 	e := echo.New()
 	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
 		Level: 5,
@@ -78,25 +80,25 @@ func main() {
 	}))
 
 	var handler serverhandlers.ServerHandler
-	var helper serverhandlers.Storager
+	var storager serverhandlers.Storager
 
-	if *cfg.DatabaseDsn != "" {
+	if isDBNotAvailable {
 		helperNew := new(dbstorage.DataBaseStorageState)
 		helperNew.Init(*cfg.DatabaseDsn)
-		helper = helperNew
+		storager = helperNew
 
 		helperNew.InitHasher(*cfg.HashKey)
 		handler.Init(helperNew)
-		helper.SetState(helperNew)
+		storager.SetState(helperNew)
 
 	} else {
 		var stater memorystate.MemoryState
 		stater.InitHasher(*cfg.HashKey)
 
-		helper = new(filestorage.FileStorageState)
-		helper.Init(*cfg.StoreFile)
+		storager = new(filestorage.FileStorageState)
+		storager.Init(*cfg.StoreFile)
 		handler.Init(&stater)
-		helper.SetState(&stater)
+		storager.SetState(&stater)
 
 	}
 	//default answer
@@ -117,14 +119,14 @@ func main() {
 
 	//ping DB
 	e.GET("/ping", func(c echo.Context) error {
-		if helper.Ping() {
+		if storager.Ping() {
 			return c.NoContent(http.StatusOK)
 		}
 		return c.NoContent(http.StatusInternalServerError)
 	})
 
-	if *cfg.Restore && *cfg.DatabaseDsn == "" {
-		helper.Restore()
+	if *cfg.Restore && isDBNotAvailable {
+		storager.Restore()
 	}
 
 	sigChan := make(chan os.Signal, 1)
@@ -143,21 +145,21 @@ func main() {
 		}
 		log.Info("HTTP server stopped.")
 
-		helper.SendDone()
+		storager.SendDone()
 		log.Info("Stopping Storage...")
 	}()
 
-	if *cfg.DatabaseDsn == "" {
-		go helper.Run(*cfg.StoreInterval)
+	if isDBNotAvailable {
+		go storager.Run(*cfg.StoreInterval)
 	}
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
 		e.Logger.Fatal("shutting down the server")
 	}
-	if *cfg.DatabaseDsn == "" {
-		helper.WaitDone()
+	if isDBNotAvailable {
+		storager.WaitDone()
 		log.Info("Storage stopped.")
 	} else {
-		helper.StopStorage()
+		storager.StopStorage()
 	}
 	log.Info("All STOPPED. BYE!")
 }

@@ -43,11 +43,13 @@ func (ss *FileStorageState) Restore() {
 	file, err := os.OpenFile(ss.store, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		log.Error(err)
+		return
 	}
 	decoder := json.NewDecoder(file)
 	mm := make(map[string]*collector.Metrics)
 	err = decoder.Decode(&mm)
 	if err != nil {
+		log.Error(err)
 		return
 	}
 	ss.state.SetMetricMap(mm)
@@ -72,6 +74,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 			encoder := json.NewEncoder(file)
 			err = encoder.Encode(ss.state.MetricMap())
 			if err != nil {
+				log.Error(err)
 				return
 			}
 			defer func(file *os.File) {
@@ -90,6 +93,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 			encoder := json.NewEncoder(file)
 			err = encoder.Encode(ss.state.MetricMap())
 			if err != nil {
+				log.Error(err)
 				return
 			}
 			defer func(file *os.File) {

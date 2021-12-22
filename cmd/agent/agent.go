@@ -42,11 +42,10 @@ func (p *Worker) RequestSend(req *http.Request) {
 	if err != nil {
 		log.Error(err)
 		return
-	} else {
-		log.Print("StatusCode:", res.StatusCode, " URL:", req.URL.Path, ", Body:", string(buf))
 	}
+	//goland:noinspection GoUnhandledErrorResult
 	defer res.Body.Close()
-
+	log.Print("StatusCode:", res.StatusCode, " URL:", req.URL.Path, ", Body:", string(buf))
 }
 
 func main() {
