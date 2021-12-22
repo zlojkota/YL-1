@@ -82,7 +82,7 @@ func main() {
 	var handler serverhandlers.ServerHandler
 	var storager serverhandlers.Storager
 
-	if isDBNotAvailable {
+	if !isDBNotAvailable {
 		helperNew := new(dbstorage.DataBaseStorageState)
 		helperNew.Init(*cfg.DatabaseDsn)
 		storager = helperNew
