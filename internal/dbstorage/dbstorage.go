@@ -2,6 +2,7 @@ package dbstorage
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/zlojkota/YL-1/internal/collector"
 	"github.com/zlojkota/YL-1/internal/hashhelper"
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
@@ -63,6 +64,10 @@ func (ss *DataBaseStorageState) Restore() {
 	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer rows.Close()
+	if rows.Err() != nil {
+		log.Error(err)
+		panic(errors.New("restore data ERROR"))
+	}
 	for rows.Next() {
 		var m collector.Metrics
 		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
