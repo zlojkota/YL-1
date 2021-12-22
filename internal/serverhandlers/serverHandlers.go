@@ -28,7 +28,9 @@ type Storager interface {
 	Run(storeInterval time.Duration)
 	Restore()
 	SendDone()
+	SendFinish()
 	WaitDone()
+	WaitFinish()
 	Init(store string)
 	SetState(state Stater)
 	Ping() bool

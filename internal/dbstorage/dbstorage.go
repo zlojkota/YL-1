@@ -15,6 +15,7 @@ import (
 
 type DataBaseStorageState struct {
 	Done         chan bool
+	Finish       chan bool
 	db           *sql.DB
 	store        string
 	state        serverhandlers.Stater
@@ -26,8 +27,16 @@ func (ss *DataBaseStorageState) SendDone() {
 	ss.Done <- true
 }
 
+func (ss *DataBaseStorageState) SendFinish() {
+	ss.Finish <- true
+}
+
 func (ss *DataBaseStorageState) WaitDone() {
 	<-ss.Done
+}
+
+func (ss *DataBaseStorageState) WaitFinish() {
+	<-ss.Finish
 }
 
 func (ss *DataBaseStorageState) Ping() bool {
@@ -41,6 +50,7 @@ func (ss *DataBaseStorageState) Ping() bool {
 
 func (ss *DataBaseStorageState) Init(store string) {
 	ss.Done = make(chan bool)
+	ss.Finish = make(chan bool)
 	var err error
 	ss.db, err = sql.Open("pgx", store)
 	if err != nil {
@@ -86,7 +96,7 @@ func (ss *DataBaseStorageState) Run(storeInterval time.Duration) {
 		select {
 		case <-ss.Done:
 			ss.SaveToStorageLast()
-			ss.Done <- true
+			ss.SendFinish()
 			return
 		case <-tick.C:
 			ss.SaveToStorage()

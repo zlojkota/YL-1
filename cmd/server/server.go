@@ -156,7 +156,7 @@ func main() {
 		e.Logger.Fatal("shutting down the server")
 	}
 	if isDBNotAvailable {
-		storager.WaitDone()
+		storager.WaitFinish()
 		log.Info("Storage stopped.")
 	} else {
 		storager.StopStorage()

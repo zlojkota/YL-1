@@ -10,16 +10,25 @@ import (
 )
 
 type FileStorageState struct {
-	state serverhandlers.Stater
-	Done  chan bool
-	store string
+	state  serverhandlers.Stater
+	Done   chan bool
+	Finish chan bool
+	store  string
 }
 
 func (ss *FileStorageState) SendDone() {
 	ss.Done <- true
 }
 
+func (ss *FileStorageState) SendFinish() {
+	ss.Finish <- true
+}
+
 func (ss *FileStorageState) WaitDone() {
+	<-ss.Done
+}
+
+func (ss *FileStorageState) WaitFinish() {
 	<-ss.Done
 }
 
@@ -32,6 +41,7 @@ func (ss *FileStorageState) Ping() bool {
 
 func (ss *FileStorageState) Init(store string) {
 	ss.Done = make(chan bool)
+	ss.Finish = make(chan bool)
 	ss.store = store
 }
 
@@ -83,7 +93,7 @@ func (ss *FileStorageState) Run(storeInterval time.Duration) {
 					log.Error(err)
 				}
 			}(file)
-			ss.Done <- true
+			ss.SendFinish()
 			return
 		case <-tick.C:
 			file, err := os.Create(ss.store)
