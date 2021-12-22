@@ -135,7 +135,6 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 			err := ss.db.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2", val.ID, val.MType).Scan(&cnt)
 			if err != nil {
 				log.Error(err)
-				return
 			}
 			if cnt == 0 {
 				_, err := ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5)", val.ID, val.MType, val.Delta, val.Value, val.Hash)
@@ -154,7 +153,6 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 			err := dbLast.QueryRow("SELECT count(id) FROM metrics WHERE id=$1 AND mtype=$2 AND ((delta is null and val=$3) or (delta=$4 and val is null)) AND hash=$5", val.ID, val.MType, val.Value, val.Delta, val.Hash).Scan(&cnt)
 			if err != nil {
 				log.Error(err)
-				return
 			}
 			if cnt == 0 {
 				allSaved = false
@@ -165,6 +163,7 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 			log.Info("reconnect to DB...")
 			err := ss.db.Close()
 			if err != nil {
+				log.Error(err)
 				return
 			}
 			ss.db, err = sql.Open("pgx", ss.store)
@@ -184,13 +183,12 @@ func (ss *DataBaseStorageState) SaveToStorageLast() {
 	}
 	err = ss.db.Close()
 	if err != nil {
-		return
+		log.Error(err)
 	}
 	log.Info("Primary DB connection close")
 	err = dbLast.Close()
 	if err != nil {
 		log.Error(err)
-		return
 	}
 	log.Info("Testing DB connection close")
 }
