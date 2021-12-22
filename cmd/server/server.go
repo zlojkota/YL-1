@@ -145,8 +145,10 @@ func main() {
 		}
 		log.Info("HTTP server stopped.")
 
-		storager.SendDone()
-		log.Info("Stopping Storage...")
+		if isDBNotAvailable {
+			storager.SendDone()
+			log.Info("Stopping Storage...")
+		}
 	}()
 
 	if isDBNotAvailable {
@@ -156,9 +158,6 @@ func main() {
 		e.Logger.Fatal("shutting down the server")
 	}
 	if !isDBNotAvailable {
-		storager.WaitFinish()
-		log.Info("Storage stopped.")
-	} else {
 		storager.StopStorage()
 	}
 	log.Info("All STOPPED. BYE!")
