@@ -1,7 +1,6 @@
 package yl1
 
 import (
-	"github.com/labstack/gommon/log"
 	"github.com/zlojkota/YL-1/internal/memorystate"
 	"net/http"
 	"net/http/httptest"
@@ -104,8 +103,6 @@ func TestAllapp(t *testing.T) {
 			newMapCounter := make(map[string]uint64)
 			mm := worker.h.State.MetricMap()
 			worker.h.State.MetricMapMuxLock()
-			log.Error("tick", iter)
-			log.Error(len(mm))
 			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
@@ -113,7 +110,6 @@ func TestAllapp(t *testing.T) {
 				case "counter":
 					newMapCounter[val.ID] = *val.Delta
 				}
-				log.Error("new map")
 			}
 			worker.h.State.MetricMapMuxUnlock()
 			if iter == 0 {
@@ -121,14 +117,12 @@ func TestAllapp(t *testing.T) {
 				loop = false
 			} else if iter != iterations {
 				for key, val := range newMapCounter {
-					log.Error("counter")
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
 						updatedCounter = true
 					}
 				}
 				for key, val := range newMapGauge {
-					log.Error("gauge")
 					oldVal, ok := oldMapGauge[key]
 					if val != oldVal && ok {
 						updatedGauge = true
