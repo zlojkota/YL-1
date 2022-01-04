@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type Stater interface {
+type State interface {
 	MetricMapMuxLock()
 	MetricMapMuxUnlock()
 	MetricMap() map[string]*collector.Metrics
@@ -24,7 +24,7 @@ type Stater interface {
 	InitHasher(hashKey string)
 }
 
-type Storager interface {
+type Storage interface {
 	Run(storeInterval time.Duration)
 	Restore()
 	SendDone()
@@ -32,20 +32,20 @@ type Storager interface {
 	WaitDone()
 	WaitFinish()
 	Init(store string)
-	SetState(state Stater)
+	SetState(state State)
 	Ping() bool
 	StopStorage()
 }
 
 type ServerHandler struct {
 	IndexPath string
-	State     Stater
+	State     State
 }
 
 const counter = "counter"
 const gauge = "gauge"
 
-func (h *ServerHandler) Init(state Stater) {
+func (h *ServerHandler) Init(state State) {
 	h.IndexPath = "./internal/httpRoot/index.html"
 	h.State = state
 	h.State.SetMetricMap(make(map[string]*collector.Metrics))

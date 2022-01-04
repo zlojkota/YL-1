@@ -67,7 +67,7 @@ func main() {
 		_ = flag.String("d", "", "DATABASE_DSN")
 	}
 	flag.Parse()
-	*cfg.DatabaseDsn = ""
+	//*cfg.DatabaseDsn = ""
 	isDBNotAvailable := *cfg.DatabaseDsn == ""
 
 	e := echo.New()
@@ -80,7 +80,7 @@ func main() {
 	}))
 
 	var handler serverhandlers.ServerHandler
-	var storager serverhandlers.Storager
+	var storager serverhandlers.Storage
 
 	if !isDBNotAvailable {
 		helperNew := new(dbstorage.DataBaseStorageState)

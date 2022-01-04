@@ -10,7 +10,7 @@ import (
 )
 
 type FileStorageState struct {
-	state  serverhandlers.Stater
+	state  serverhandlers.State
 	Done   chan bool
 	Finish chan bool
 	store  string
@@ -45,7 +45,7 @@ func (ss *FileStorageState) Init(store string) {
 	ss.store = store
 }
 
-func (ss *FileStorageState) SetState(state serverhandlers.Stater) {
+func (ss *FileStorageState) SetState(state serverhandlers.State) {
 	ss.state = state
 }
 
