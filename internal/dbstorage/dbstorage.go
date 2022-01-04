@@ -145,6 +145,9 @@ func (ss *DataBaseStorageState) MetricMapMuxUnlock() {
 
 func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
 
+	ss.MetricMapMuxLock()
+	defer ss.MetricMapMuxUnlock()
+
 	ret := make(map[string]*collector.Metrics)
 
 	rows, err := ss.db.Query("SELECT * FROM metrics")
@@ -167,6 +170,8 @@ func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
 }
 
 func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Metrics) {
+	ss.MetricMapMuxLock()
+	defer ss.MetricMapMuxUnlock()
 
 	if len(metricMap) != 0 {
 		for _, val := range metricMap {
@@ -179,6 +184,8 @@ func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Met
 }
 
 func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, bool) {
+	ss.MetricMapMuxLock()
+	defer ss.MetricMapMuxUnlock()
 
 	var val collector.Metrics
 	rows, err := ss.db.Query("SELECT * FROM metrics WHERE id=$1", item)
@@ -200,6 +207,9 @@ func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, 
 }
 
 func (ss *DataBaseStorageState) SetMetricMapItem(val *collector.Metrics) {
+	ss.MetricMapMuxLock()
+	defer ss.MetricMapMuxUnlock()
+
 	_, err := ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5) ON CONFLICT (id,mtype) DO UPDATE set delta=$3, val=$4, hash=$5", val.ID, val.MType, val.Delta, val.Value, val.Hash)
 	if err != nil {
 		log.Error(err)
