@@ -57,7 +57,7 @@ func (ss *DataBaseStorageState) Init(store string) {
 	if err != nil {
 		panic(err)
 	}
-	if _, err := ss.db.Exec("create table if not exists metrics( id varchar(256),mtype varchar(256), delta int, val double precision, hash varchar(256) DEFAULT '')"); err != nil {
+	if _, err := ss.db.Exec("create table if not exists metrics( id varchar(256),mtype varchar(256), delta bigint, val double precision, hash varchar(256) DEFAULT '')"); err != nil {
 		panic(err)
 	}
 	if _, err := ss.db.Exec("create unique index if not exists metrics_id ON metrics(id,mtype);\n"); err != nil {
