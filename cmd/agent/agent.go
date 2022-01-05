@@ -58,7 +58,7 @@ func main() {
 
 	err := env.Parse(&worker)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 
 	if _, ok := os.LookupEnv("ADDRESS"); !ok {

@@ -154,6 +154,9 @@ func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
 	if err != nil {
 		panic(err)
 	}
+	if rows.Err() != nil {
+		return nil
+	}
 	//goland:noinspection GoUnhandledErrorResult
 	defer rows.Close()
 
@@ -190,6 +193,9 @@ func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, 
 	var val collector.Metrics
 	rows, err := ss.db.Query("SELECT * FROM metrics WHERE id=$1", item)
 	if err != nil {
+		return nil, false
+	}
+	if rows.Err() != nil {
 		return nil, false
 	}
 	defer rows.Close()

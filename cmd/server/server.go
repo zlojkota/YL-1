@@ -33,7 +33,7 @@ func main() {
 
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 
 	if _, ok := os.LookupEnv("ADDRESS"); !ok {
@@ -141,7 +141,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := e.Shutdown(ctx); err != nil {
-			e.Logger.Fatal(err)
+			e.Logger.Error(err)
 		}
 		log.Info("HTTP server stopped.")
 
@@ -155,7 +155,7 @@ func main() {
 		go storager.Run(*cfg.StoreInterval)
 	}
 	if err := e.Start(*cfg.ServerAddr); err != nil && err != http.ErrServerClosed {
-		e.Logger.Fatal("shutting down the server")
+		e.Logger.Error("shutting down the server")
 	}
 	if !isDBNotAvailable {
 		storager.StopStorage()
