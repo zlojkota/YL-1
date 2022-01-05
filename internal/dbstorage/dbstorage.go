@@ -20,6 +20,7 @@ type DataBaseStorageState struct {
 	store        string
 	state        serverhandlers.State
 	metricMapMux sync.Mutex
+	metricMap    map[string]*collector.Metrics
 	Hasher       *hashhelper.Hasher
 }
 
@@ -145,34 +146,13 @@ func (ss *DataBaseStorageState) MetricMapMuxUnlock() {
 
 func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
 
-	ss.MetricMapMuxLock()
-	defer ss.MetricMapMuxUnlock()
-
-	ret := make(map[string]*collector.Metrics)
-
-	rows, err := ss.db.Query("SELECT * FROM metrics")
-	if err != nil {
-		panic(err)
-	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer rows.Close()
-
-	for rows.Next() {
-		var m collector.Metrics
-		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		ret[m.ID] = &m
-	}
-	return ret
+	return ss.metricMap
 }
 
 func (ss *DataBaseStorageState) SetMetricMap(metricMap map[string]*collector.Metrics) {
 	ss.MetricMapMuxLock()
 	defer ss.MetricMapMuxUnlock()
-
+	ss.metricMap = metricMap
 	if len(metricMap) != 0 {
 		for _, val := range metricMap {
 			_, err := ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5) ON CONFLICT (id,mtype) DO UPDATE set delta=$3, val=$4, hash=$5", val.ID, val.MType, val.Delta, val.Value, val.Hash)
@@ -187,29 +167,14 @@ func (ss *DataBaseStorageState) MetricMapItem(item string) (*collector.Metrics, 
 	ss.MetricMapMuxLock()
 	defer ss.MetricMapMuxUnlock()
 
-	var val collector.Metrics
-	rows, err := ss.db.Query("SELECT * FROM metrics WHERE id=$1", item)
-	if err != nil {
-		return nil, false
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		err = rows.Scan(&val.ID, &val.MType, &val.Delta, &val.Value, &val.Hash)
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		val.Hash = ss.state.GetHaser().Hash(&val)
-		return &val, true
-	}
-	return nil, false
+	res, ok := ss.metricMap[item]
+	return res, ok
 }
 
 func (ss *DataBaseStorageState) SetMetricMapItem(val *collector.Metrics) {
 	ss.MetricMapMuxLock()
 	defer ss.MetricMapMuxUnlock()
-
+	ss.metricMap[val.ID] = val
 	_, err := ss.db.Exec("INSERT INTO metrics (id, mtype, delta, val, hash) values ($1,$2,$3,$4,$5) ON CONFLICT (id,mtype) DO UPDATE set delta=$3, val=$4, hash=$5", val.ID, val.MType, val.Delta, val.Value, val.Hash)
 	if err != nil {
 		log.Error(err)
