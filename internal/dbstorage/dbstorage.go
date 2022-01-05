@@ -54,13 +54,16 @@ func (ss *DataBaseStorageState) Init(store string) {
 	var err error
 	ss.db, err = sql.Open("pgx", store)
 	if err != nil {
-		panic(err)
+		log.Error(err)
+		return
 	}
 	if _, err := ss.db.Exec("create table if not exists metrics( id varchar(256),mtype varchar(256), delta bigint, val double precision, hash varchar(256) DEFAULT '')"); err != nil {
-		panic(err)
+		log.Error(err)
+		return
 	}
 	if _, err := ss.db.Exec("create unique index if not exists metrics_id ON metrics(id,mtype);\n"); err != nil {
-		panic(err)
+		log.Error(err)
+		return
 	}
 	ss.store = store
 }
@@ -152,7 +155,8 @@ func (ss *DataBaseStorageState) MetricMap() map[string]*collector.Metrics {
 
 	rows, err := ss.db.Query("SELECT * FROM metrics")
 	if err != nil {
-		panic(err)
+		log.Error(err)
+		return nil
 	}
 	if rows.Err() != nil {
 		return nil
