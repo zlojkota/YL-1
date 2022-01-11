@@ -11,20 +11,22 @@ import (
 type Metrics struct {
 	ID    string   `json:"id"`              // имя метрики
 	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Delta *uint64  `json:"delta,omitempty"` // значение метрики в случае передачи counter
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	Hash  string   `json:"hash,omitempty"`  // значение хеш-функции
+
 }
 
 type CollectorHandle interface {
-	SendMetrics(metrics *[]Metrics)
+	MakeRequest(metrics []*Metrics)
 }
 
 type Collector struct {
 	handle       CollectorHandle
 	poolinterval time.Duration
 	Done         chan bool
-	Metrics      []Metrics
-	counter      int64
+	Metrics      []*Metrics
+	counter      uint64
 	randomvalue  float64
 	rtm          runtime.MemStats
 	rtmFloat     map[string]*float64
@@ -35,12 +37,12 @@ func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle)
 	col.handle = handle
 	col.Done = make(chan bool)
 	col.rtmFloat = make(map[string]*float64)
-	col.Metrics = append(col.Metrics, Metrics{
+	col.Metrics = append(col.Metrics, &Metrics{
 		ID:    "PollCount",
 		MType: "counter",
 		Delta: &col.counter,
 	})
-	col.Metrics = append(col.Metrics, Metrics{
+	col.Metrics = append(col.Metrics, &Metrics{
 		ID:    "RandomValue",
 		MType: "gauge",
 		Value: &col.randomvalue,
@@ -60,7 +62,7 @@ func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle)
 			continue
 		}
 		col.rtmFloat[ref.Type().Field(i).Name] = temp
-		col.Metrics = append(col.Metrics, Metrics{
+		col.Metrics = append(col.Metrics, &Metrics{
 			ID:    ref.Type().Field(i).Name,
 			MType: "gauge",
 			Value: temp,
@@ -102,7 +104,7 @@ func (col *Collector) Run() {
 			if col.handle == nil {
 				log.Println(col.Metrics)
 			} else {
-				col.handle.SendMetrics(&col.Metrics)
+				col.handle.MakeRequest(col.Metrics)
 			}
 		}
 		col.counter++

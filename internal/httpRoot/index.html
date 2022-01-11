@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Main Page</title>
+</head>
+<body>
+<h1>METRICS:</h1>
+<table style="width:100%">
+    <thead>
+    <tr>
+        <th scope="col">Metric Name</th>
+        <th scope="col">Metric Type</th>
+        <th scope="col">Value</th>
+        <th scope="col">Hash</th>
+        <th scope="col">Hyperlinc</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range $index, $element := .}}
+    <tr>
+        <td>{{$index}}</td>
+        <td>{{$element.MType}}</td>
+        <td>
+            {{if $element.Value}}
+            {{$element.Value}}
+            {{else}}
+            {{$element.Delta}}
+            {{end}}
+        </td>
+        <td>{{$element.Hash}}</td>
+        <td><a href="http://localhost:8080/value/gauge/{{$index}}">http://localhost:8080/value/gauge/{{$index}}</a></td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+
+
+
+</body>
+</html>

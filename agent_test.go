@@ -1,6 +1,7 @@
 package yl1
 
 import (
+	"github.com/zlojkota/YL-1/internal/memorystate"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,13 +14,15 @@ import (
 	"github.com/zlojkota/YL-1/internal/serverhandlers"
 )
 
+const iterations = 200
+
 type Worker struct {
 	t *testing.T
 	h *serverhandlers.ServerHandler
 	e *echo.Echo
 }
 
-func (p *Worker) RequestServe(req *http.Request) {
+func (p *Worker) RequestSend(req *http.Request) {
 
 	p.t.Run("Handling reqwest-response", func(t *testing.T) {
 		rec := httptest.NewRecorder()
@@ -29,12 +32,14 @@ func (p *Worker) RequestServe(req *http.Request) {
 		// Assertions
 		val := req.Header.Get("Content-Type")
 		if val == "application/json" {
-			if assert.NoError(p.t, p.h.UpdateJSONHandler(c)) {
-				assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Post update application/json")
+			if assert.NoError(p.t, p.h.UpdateBATCHHandler(c), "Error application/json") {
+				if req.URL.Path == "/update/" {
+					assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Post update application/json")
+				}
 			}
 		} else {
 			c.SetPath("/update/:type/:metric/:value")
-			if assert.NoError(p.t, p.h.UpdateHandler(c)) {
+			if assert.NoError(p.t, p.h.UpdateHandler(c), "Error plain/text") {
 				assert.Equal(p.t, http.StatusOK, rec.Code, "Not valid Get update text/plain")
 			}
 		}
@@ -44,21 +49,25 @@ func (p *Worker) RequestServe(req *http.Request) {
 
 func (p *Worker) InitWorker(t *testing.T) {
 	p.t = t
-	p.h = serverhandlers.NewServerHandler()
+	p.h = new(serverhandlers.ServerHandler)
+	mem := new(memorystate.MemoryState)
+	mem.InitHasher("")
+	p.h.Init(mem)
 	p.e = echo.New()
 	p.e.GET("/*", p.h.NotFoundHandler)
 	p.e.POST("/*", p.h.NotFoundHandler)
 
 	// update Handler
 	p.e.POST("/update/:type/:metric/:value", p.h.UpdateHandler)
-	p.e.POST("/update/", p.h.UpdateJSONHandler)
+	p.e.POST("/update/", p.h.UpdateHandler)
+	p.e.POST("/updates/", p.h.UpdateBATCHHandler)
 
 	// homePage Handler
 	p.e.GET("/", p.h.MainHandler)
 
 	// getValue Handler
 	p.e.GET("/value/:type/:metric", p.h.GetHandler)
-	p.e.POST("/value/", p.h.GetJSONHandler)
+	p.e.POST("/value/", p.h.GetHandler)
 
 }
 
@@ -68,7 +77,7 @@ func TestAllapp(t *testing.T) {
 	var agent agentcollector.Agent
 	var worker Worker
 	worker.InitWorker(t)
-	agent.InitAgent(&worker, "")
+	agent.InitAgentJSON(&worker, "")
 	col.Handle(2*time.Millisecond, &agent)
 	go func() {
 		col.Run()
@@ -76,14 +85,14 @@ func TestAllapp(t *testing.T) {
 	t.Run("Check update value", func(t *testing.T) {
 		var (
 			oldMapGauge   map[string]float64
-			oldMapCounter map[string]int64
+			oldMapCounter map[string]uint64
 		)
 		oldMapGauge = make(map[string]float64)
-		oldMapCounter = make(map[string]int64)
+		oldMapCounter = make(map[string]uint64)
 
 		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
-		iter := 20
+		iter := iterations
 		loop := true
 		updatedCounter := false
 		updatedGauge := false
@@ -91,8 +100,10 @@ func TestAllapp(t *testing.T) {
 		for loop {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
-			newMapCounter := make(map[string]int64)
-			for _, val := range worker.h.MetricMap {
+			newMapCounter := make(map[string]uint64)
+			mm := worker.h.State.MetricMap()
+			worker.h.State.MetricMapMuxLock()
+			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
 					newMapGauge[val.ID] = *val.Value
@@ -100,10 +111,11 @@ func TestAllapp(t *testing.T) {
 					newMapCounter[val.ID] = *val.Delta
 				}
 			}
+			worker.h.State.MetricMapMuxUnlock()
 			if iter == 0 {
 				col.Done <- true
 				loop = false
-			} else if iter != 20 {
+			} else if iter != iterations {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {
@@ -131,23 +143,24 @@ func TestAllapp(t *testing.T) {
 	t.Run("Check Not update value", func(t *testing.T) {
 		var (
 			oldMapGauge   map[string]float64
-			oldMapCounter map[string]int64
+			oldMapCounter map[string]uint64
 		)
 		oldMapGauge = make(map[string]float64)
-		oldMapCounter = make(map[string]int64)
+		oldMapCounter = make(map[string]uint64)
 
 		tick := time.NewTicker(4 * time.Millisecond)
 		defer tick.Stop()
 
 		updatedCounter := false
 		updatedGauge := false
-		iter := 20
+		iter := iterations
 		loop := true
 		for loop {
 			<-tick.C
 			newMapGauge := make(map[string]float64)
-			newMapCounter := make(map[string]int64)
-			for _, val := range worker.h.MetricMap {
+			newMapCounter := make(map[string]uint64)
+			mm := worker.h.State.MetricMap()
+			for _, val := range mm {
 				switch val.MType {
 				case "gauge":
 					newMapGauge[val.ID] = *val.Value
@@ -158,7 +171,7 @@ func TestAllapp(t *testing.T) {
 
 			if iter == 0 {
 				loop = false
-			} else if iter != 20 {
+			} else if iter != iterations {
 				for key, val := range newMapCounter {
 					oldVal, ok := oldMapCounter[key]
 					if val != oldVal && ok {

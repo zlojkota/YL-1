@@ -1,6 +1,7 @@
 package serverhandlers
 
 import (
+	"github.com/zlojkota/YL-1/internal/memorystate"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +17,7 @@ func TestServerHandler_NotFoundHandler(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		h := NewServerHandler()
+		h := new(ServerHandler)
 
 		// Assertions
 		if assert.NoError(t, h.NotFoundHandler(c)) {
@@ -238,8 +239,11 @@ func TestServerHandler_GetUpdateHandlers(t *testing.T) {
 		},
 	}
 
-	h := NewServerHandler()
-
+	h := new(ServerHandler)
+	mem := new(memorystate.MemoryState)
+	mem.InitHasher("")
+	h.Init(mem)
+	h.IndexPath = "../../internal/httpRoot/index.html"
 	t.Run("Home page blank", func(t *testing.T) {
 		// Setup
 		e := echo.New()
