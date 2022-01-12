@@ -10,7 +10,7 @@
 # Обновление шаблона
 
 Чтобы получать обновления автотестов и других частей шаблона, выполните следующие команды:
-
+123
 ```
 git remote add -m main template https://github.com/yandex-praktikum/go-musthave-devops-tpl.git
 ```
