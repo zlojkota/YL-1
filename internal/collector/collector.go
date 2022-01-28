@@ -42,8 +42,8 @@ type Collector struct {
 	rtm          runtime.MemStats
 	rtmFloat     map[string]*float64
 	procFloat    map[string]*float64
-	procIdles    *[]uint64
-	procTotals   *[]uint64
+	procIdles    []uint64
+	procTotals   []uint64
 	mux          sync.Mutex
 }
 
@@ -184,8 +184,8 @@ func (col *Collector) getCPUUtilization() {
 			totals = append(totals, total)
 			idles = append(idles, idle)
 			if col.procTotals != nil {
-				idleTicks := float64(idle - (*col.procIdles)[cpuID])
-				totalTicks := float64(total - (*col.procTotals)[cpuID])
+				idleTicks := float64(idle - col.procIdles[cpuID])
+				totalTicks := float64(total - col.procTotals[cpuID])
 				cpuUsage := 100 * (totalTicks - idleTicks) / totalTicks
 				name := fmt.Sprintf("CPUutilization%d", cpuID)
 				*col.procFloat[name] = cpuUsage
@@ -193,8 +193,8 @@ func (col *Collector) getCPUUtilization() {
 			cpuID++
 		}
 	}
-	col.procIdles = &idles
-	col.procTotals = &totals
+	col.procIdles = idles
+	col.procTotals = totals
 }
 
 func (col *Collector) collectProc(ctx context.Context) {
