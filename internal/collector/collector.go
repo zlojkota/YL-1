@@ -44,15 +44,7 @@ type Collector struct {
 	procFloat    map[string]*float64
 	procIdles    []uint64
 	procTotals   []uint64
-	mux          sync.Mutex
-}
-
-func (col *Collector) muxLock() {
-	col.mux.Lock()
-}
-
-func (col *Collector) muxUnLock() {
-	col.mux.Unlock()
+	*sync.Mutex
 }
 
 func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle) {
@@ -125,7 +117,7 @@ func (col *Collector) collectRuntime(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-tick.C:
-			col.muxLock()
+			col.Lock()
 			runtime.ReadMemStats(&col.rtm)
 			ref := reflect.ValueOf(col.rtm)
 			for i := 0; i < ref.NumField(); i++ {
@@ -146,7 +138,7 @@ func (col *Collector) collectRuntime(ctx context.Context) {
 			}
 			col.counter++
 			col.randomvalue = rand.Float64()
-			col.muxUnLock()
+			col.Unlock()
 		}
 	}
 }
@@ -208,12 +200,12 @@ func (col *Collector) collectProc(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-tick.C:
-			col.muxLock()
+			col.Lock()
 			memProc, _ := mem.VirtualMemory()
 			col.memTotal = float64(memProc.Total)
 			col.memFree = float64(memProc.Free)
 			col.getCPUUtilization()
-			col.muxUnLock()
+			col.Unlock()
 		}
 	}
 }
@@ -253,9 +245,9 @@ func (col *Collector) sendMertics(ctx context.Context) {
 			if col.handle == nil {
 				log.Println(col)
 			} else {
-				col.muxLock()
+				col.Lock()
 				col.handle.MakeRequest(&col.Metrics)
-				col.muxUnLock()
+				col.Unlock()
 			}
 		}
 	}
