@@ -160,13 +160,13 @@ func (col *Collector) getCPUUtilization() {
 	var totals []uint64
 	var idles []uint64
 	cpuID := 0
+	re, _ := regexp.Compile("cpu[0-9]+")
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		str := ""
 		if len(fields) != 0 {
 			str = fields[0]
 		}
-		re, _ := regexp.Compile("cpu[0-9]+")
 		if re.MatchString(str) {
 			numFields := len(fields)
 			total := uint64(0)
