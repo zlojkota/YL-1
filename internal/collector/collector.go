@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/shirou/gopsutil/v3/mem"
@@ -27,7 +28,7 @@ type Metrics struct {
 }
 
 type CollectorHandle interface {
-	MakeRequest(metrics []*Metrics)
+	MakeRequest(metrics *[]*Metrics)
 }
 
 type Collector struct {
@@ -44,6 +45,15 @@ type Collector struct {
 	procFloat    map[string]*float64
 	procIdles    *[]uint64
 	procTotals   *[]uint64
+	mux          sync.Mutex
+}
+
+func (col *Collector) muxLock() {
+	col.mux.Lock()
+}
+
+func (col *Collector) muxUnLock() {
+	col.mux.Unlock()
 }
 
 func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle) {
@@ -51,6 +61,7 @@ func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle)
 	col.handle = handle
 	col.Done = make(chan bool)
 	col.rtmFloat = make(map[string]*float64)
+	col.procFloat = make(map[string]*float64)
 	col.Metrics = append(col.Metrics, &Metrics{
 		ID:    "PollCount",
 		MType: "counter",
@@ -92,10 +103,19 @@ func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle)
 			Value: temp,
 		})
 	}
-	mem.VirtualMemory()
+	for i := 0; i < runtime.NumCPU(); i++ {
+		temp := float64(0)
+		name := fmt.Sprintf("CPUutilization%d", i)
+		col.procFloat[name] = &temp
+		col.Metrics = append(col.Metrics, &Metrics{
+			ID:    name,
+			MType: "gauge",
+			Value: col.procFloat[name],
+		})
+	}
 }
 
-func (col Collector) collectRuntime(ctx context.Context) {
+func (col *Collector) collectRuntime(ctx context.Context) {
 	if col.poolinterval == 0 {
 		col.poolinterval = time.Second
 	}
@@ -106,6 +126,7 @@ func (col Collector) collectRuntime(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-tick.C:
+			col.muxLock()
 			runtime.ReadMemStats(&col.rtm)
 			ref := reflect.ValueOf(col.rtm)
 			for i := 0; i < ref.NumField(); i++ {
@@ -126,11 +147,12 @@ func (col Collector) collectRuntime(ctx context.Context) {
 			}
 			col.counter++
 			col.randomvalue = rand.Float64()
+			col.muxUnLock()
 		}
 	}
 }
 
-func (col Collector) getCpuUtilization() {
+func (col *Collector) getCpuUtilization() {
 	contents, err := ioutil.ReadFile("/proc/stat")
 	if err != nil {
 		return
@@ -166,7 +188,8 @@ func (col Collector) getCpuUtilization() {
 				idleTicks := float64(idle - (*col.procIdles)[cpuId])
 				totalTicks := float64(total - (*col.procTotals)[cpuId])
 				cpuUsage := 100 * (totalTicks - idleTicks) / totalTicks
-				fmt.Printf("CPU%d usage is %f%%\n", cpuId, cpuUsage)
+				name := fmt.Sprintf("CPUutilization%d", cpuId)
+				*col.procFloat[name] = cpuUsage
 			}
 			cpuId++
 		}
@@ -175,7 +198,7 @@ func (col Collector) getCpuUtilization() {
 	col.procTotals = &totals
 }
 
-func (col Collector) collectProc(ctx context.Context) {
+func (col *Collector) collectProc(ctx context.Context) {
 	if col.poolinterval == 0 {
 		col.poolinterval = time.Second
 	}
@@ -186,15 +209,38 @@ func (col Collector) collectProc(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-tick.C:
+			col.muxLock()
 			memProc, _ := mem.VirtualMemory()
 			col.memTotal = float64(memProc.Total)
 			col.memFree = float64(memProc.Free)
 			col.getCpuUtilization()
+			col.muxUnLock()
 		}
 	}
 }
 
-func (col Collector) sendMertics(ctx context.Context) {
+func (col *Collector) String() string {
+
+	ret := ""
+	for _, val := range col.Metrics {
+		var d uint64
+		var v float64
+		if val.Delta == nil {
+			d = 0
+		} else {
+			d = *val.Delta
+		}
+		if val.Value == nil {
+			v = 0
+		} else {
+			v = *val.Value
+		}
+		ret += fmt.Sprintf("%s=D:%d,V:%f;", val.ID, d, v)
+	}
+	return ret
+}
+
+func (col *Collector) sendMertics(ctx context.Context) {
 	if col.poolinterval == 0 {
 		col.poolinterval = time.Second
 	}
@@ -206,9 +252,11 @@ func (col Collector) sendMertics(ctx context.Context) {
 			return
 		case <-tick.C:
 			if col.handle == nil {
-				log.Println(col.Metrics)
+				log.Println(col)
 			} else {
-				col.handle.MakeRequest(col.Metrics)
+				col.muxLock()
+				col.handle.MakeRequest(&col.Metrics)
+				col.muxUnLock()
 			}
 		}
 	}
