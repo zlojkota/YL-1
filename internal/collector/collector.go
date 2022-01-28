@@ -166,8 +166,8 @@ func (col *Collector) getCPUUtilization() {
 		if len(fields) != 0 {
 			str = fields[0]
 		}
-		matched, _ := regexp.MatchString("cpu[0-9]+", str)
-		if matched {
+		re, _ := regexp.Compile("cpu[0-9]+")
+		if re.MatchString(str) {
 			numFields := len(fields)
 			total := uint64(0)
 			idle := uint64(0)
