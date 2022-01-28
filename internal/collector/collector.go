@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/mem"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -15,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 type Metrics struct {
@@ -152,7 +151,7 @@ func (col *Collector) collectRuntime(ctx context.Context) {
 	}
 }
 
-func (col *Collector) getCpuUtilization() {
+func (col *Collector) getCPUUtilization() {
 	contents, err := ioutil.ReadFile("/proc/stat")
 	if err != nil {
 		return
@@ -160,7 +159,7 @@ func (col *Collector) getCpuUtilization() {
 	lines := strings.Split(string(contents), "\n")
 	var totals []uint64
 	var idles []uint64
-	cpuId := 0
+	cpuID := 0
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		str := ""
@@ -185,13 +184,13 @@ func (col *Collector) getCpuUtilization() {
 			totals = append(totals, total)
 			idles = append(idles, idle)
 			if col.procTotals != nil {
-				idleTicks := float64(idle - (*col.procIdles)[cpuId])
-				totalTicks := float64(total - (*col.procTotals)[cpuId])
+				idleTicks := float64(idle - (*col.procIdles)[cpuID])
+				totalTicks := float64(total - (*col.procTotals)[cpuID])
 				cpuUsage := 100 * (totalTicks - idleTicks) / totalTicks
-				name := fmt.Sprintf("CPUutilization%d", cpuId)
+				name := fmt.Sprintf("CPUutilization%d", cpuID)
 				*col.procFloat[name] = cpuUsage
 			}
-			cpuId++
+			cpuID++
 		}
 	}
 	col.procIdles = &idles
@@ -213,7 +212,7 @@ func (col *Collector) collectProc(ctx context.Context) {
 			memProc, _ := mem.VirtualMemory()
 			col.memTotal = float64(memProc.Total)
 			col.memFree = float64(memProc.Free)
-			col.getCpuUtilization()
+			col.getCPUUtilization()
 			col.muxUnLock()
 		}
 	}
@@ -268,10 +267,6 @@ func (col *Collector) Run() {
 	go col.collectRuntime(bctx)
 	go col.collectProc(bctx)
 	go col.sendMertics(bctx)
-
-	select {
-	case <-col.Done:
-		bctxCancel()
-		return
-	}
+	<-col.Done
+	bctxCancel()
 }
