@@ -48,9 +48,11 @@ type Collector struct {
 }
 
 func (col *Collector) Handle(poolinterval time.Duration, handle CollectorHandle) {
+	col.Mutex = new(sync.Mutex)
 	col.poolinterval = poolinterval
 	col.handle = handle
 	col.Done = make(chan bool)
+
 	col.rtmFloat = make(map[string]*float64)
 	col.procFloat = make(map[string]*float64)
 	col.Metrics = append(col.Metrics, &Metrics{
