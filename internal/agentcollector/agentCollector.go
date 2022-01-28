@@ -118,7 +118,7 @@ func (p *Agent) MakeRequestPLTX(metrics *collector.Metrics) (*http.Request, erro
 	return req, nil
 }
 
-func (p *Agent) MakeRequest(metrics []*collector.Metrics) {
+func (p *Agent) MakeRequest(metrics *[]*collector.Metrics) {
 	if p.agentCollector == nil {
 		log.Error("No AgentCollector Init!")
 		return
@@ -144,7 +144,7 @@ func (p *Agent) MakeRequest(metrics []*collector.Metrics) {
 	//	p.agentCollector.RequestSend(req)
 	//}
 
-	req, err := p.MakeRequestJSONBatch(metrics)
+	req, err := p.MakeRequestJSONBatch(*metrics)
 	if err != nil {
 		log.Error(err)
 		return
